@@ -50,11 +50,24 @@
     .floating-toolbar-title { color:#f8fafc; font-size:12px; font-weight:750; letter-spacing:.08em; }
     .floating-toolbar-subtitle { margin-top:3px; color:#64748b; font-size:10px; }
     .floating-toolbar-geometry { max-width:100px; overflow:hidden; padding:3px 7px; border:1px solid rgba(96,165,250,.22); border-radius:7px; color:#93c5fd; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
-    .toolbar-group { margin-bottom:10px; padding:10px; border:1px solid rgba(71,85,105,.55); border-radius:12px; background:rgba(15,23,42,.62); }
+    .toolbar-group { position:relative; z-index:1; margin-bottom:10px; padding:10px; border:1px solid rgba(71,85,105,.55); border-radius:12px; background:rgba(15,23,42,.62); }
+    .toolbar-group.source-group { z-index:30; }
     .toolbar-section-label { display:flex; align-items:center; justify-content:space-between; margin:0 0 7px; color:#94a3b8; font-size:10px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
     .toolbar-section-label::after { content:'BASE MAP'; color:#64748b; font-size:9px; letter-spacing:.08em; }
-    .floating-toolbar select { width:100%; height:38px; margin-bottom:7px; padding:0 10px; border:1px solid #475569; border-radius:9px; background:#1e293b; color:#f8fafc; outline:none; cursor:pointer; }
-    .floating-toolbar select:focus { border-color:#60a5fa; box-shadow:0 0 0 2px rgba(96,165,250,.2); }
+    .source-picker { position:relative; z-index:10; margin-bottom:7px; }
+    .source-picker-button { display:flex; align-items:center; justify-content:space-between; width:100%; height:38px; padding:0 10px; border:1px solid #475569; border-radius:9px; background:#1e293b; color:#f8fafc; outline:none; cursor:pointer; text-align:left; }
+    .source-picker-button:hover, .source-picker-button[aria-expanded="true"] { border-color:#60a5fa; box-shadow:0 0 0 2px rgba(96,165,250,.2); }
+    .source-picker-value { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .source-picker-chevron { margin-left:8px; color:#94a3b8; transition:transform .16s ease; }
+    .source-picker-button[aria-expanded="true"] .source-picker-chevron { transform:rotate(180deg); }
+    .source-menu { position:absolute; z-index:100; left:0; right:0; top:calc(100% + 6px); display:none; max-height:245px; overflow-y:auto; padding:5px; border:1px solid #475569; border-radius:10px; background:#111c31; box-shadow:0 18px 38px rgba(0,0,0,.46); scrollbar-width:thin; scrollbar-color:#64748b transparent; }
+    .source-menu.open { display:block; }
+    .source-menu.open-up { top:auto; bottom:calc(100% + 6px); }
+    .source-menu-group { padding:6px 8px 4px; color:#64748b; font-size:9px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+    .source-menu-option { display:block; width:100%; margin:1px 0; padding:8px 9px; border:0; border-radius:7px; background:transparent; color:#dbeafe; cursor:pointer; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .source-menu-option:hover, .source-menu-option[aria-selected="true"] { background:#263d61; color:#f8fafc; }
+    .source-menu-option[aria-selected="true"] { box-shadow:inset 2px 0 #60a5fa; }
+    .source-select-hidden { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
     .toolbar-source-meta { display:flex; align-items:center; justify-content:space-between; min-height:21px; color:#94a3b8; font-size:10px; }
     .toolbar-source-meta span:last-child { max-width:165px; overflow:hidden; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
     .toolbar-source-kind { padding:2px 6px; border-radius:5px; background:rgba(16,185,129,.12); color:#a7f3d0; font-weight:650; }
@@ -79,7 +92,7 @@
   <button class="toolbar-toggle" id="toolbarToggle" type="button" aria-expanded="false" title="Map controls"><span class="toolbar-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M8 14v6"/></svg></span><span class="toolbar-toggle-label">MAP CONTROLS</span><span class="toolbar-toggle-chevron">⌄</span></button>
   <div class="toolbar-panel" id="toolbarPanel">
     <div class="floating-toolbar-head"><div><div class="floating-toolbar-title">MAP CONTROLS</div><div class="floating-toolbar-subtitle">Choose a base map for this result set</div></div><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
-    <div class="toolbar-group"><span class="toolbar-section-label">Map layers</span><select id="sourceSelect" aria-label="Map source"></select><div class="toolbar-source-meta"><span id="sourceKind" class="toolbar-source-kind">Built-in map</span><span id="sourceAttribution"></span></div></div>
+    <div class="toolbar-group source-group"><span class="toolbar-section-label">Map layers</span><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false"><span id="sourcePickerValue" class="source-picker-value">Choose a map</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox"></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div><div class="toolbar-source-meta"><span id="sourceKind" class="toolbar-source-kind">Built-in map</span><span id="sourceAttribution"></span></div></div>
     <div class="toolbar-group"><span class="toolbar-section-label">Manage</span><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></span>Set default</button><button id="addSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Add custom</button></div><div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11.8-11.8a2.8 2.8 0 0 0-4-4L4 16Z"/><path d="m14.5 5.5 4 4"/></svg></span>Edit custom</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 14h8l1-14"/></svg></span>Remove</button></div></div>
     <div class="floating-toolbar-note">Built-in maps are protected. Custom maps can be edited or removed here. Select a row or a feature to keep the table and map in sync.</div>
   </div>
@@ -123,7 +136,7 @@
       }
       if (boundary) return { color:'#7884a0', weight:.55, opacity:.45, dashArray:'3 4', fill:false };
       if (point) return { color:'#d3a76a', weight:.4, opacity:.62, fillColor:'#d3a76a', fillOpacity:.52, radius:Math.min(3.5, 1.5 + level / 10), fill:true };
-      return { color:'#617087', weight:.42, opacity:.34, fillColor:'#334155', fillOpacity:.06, fill:false };
+      return { color:'#7aa2bf', weight:.72, opacity:.68, fillColor:'#28475b', fillOpacity:.2, fill:true, radius:2.4 };
     };
   }
   function createSourceLayer(source) {
@@ -153,6 +166,7 @@
       health.errors = Math.max(0, health.errors - 1);
       health.retries = 0;
       health.message = '';
+      if (source.type === 'mvt') refreshMvtStyles(layer);
       updateTileNotice();
     });
     layer.on('tileerror', function() {
@@ -167,8 +181,20 @@
     layers[source.name] = layer;
     if (!currentLayer) { currentLayer = layers[source.name]; currentLayer.addTo(map); activeSource = source.name; }
   }
+  function refreshMvtStyles(layer) {
+    if (!layer || !layer.getDataLayerNames || !layer.options || !layer.options.vectorTileLayerStyles) return;
+    const names = layer.getDataLayerNames();
+    let changed = false;
+    names.forEach(name => {
+      if (!layer.options.vectorTileLayerStyles[name]) {
+        layer.options.vectorTileLayerStyles[name] = vectorTileStyleForLayer(name);
+        changed = true;
+      }
+    });
+    if (changed && layer.redraw) layer.redraw();
+  }
   function addSourceFromJava(source, selectIt) { addSource(source); if (selectIt) { const select = document.getElementById('sourceSelect'); if (select) select.value = source.name; switchSource(source.name); } if (window.dg && window.dg.sourcesChanged) window.dg.sourcesChanged(Object.keys(layers)); }
-  function switchSource(name) { if (!sourceDefinitions.has(name)) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name] || null; activeSource = name; const select = document.getElementById('sourceSelect'); if (select) select.value = name; if (currentLayer) currentLayer.addTo(map); updateSourceMeta(); updateTileNotice(); }
+  function switchSource(name) { if (!sourceDefinitions.has(name)) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name] || null; activeSource = name; const select = document.getElementById('sourceSelect'); if (select) { select.value = name; updateSourcePickerValue(); renderSourceMenu(); } if (currentLayer) currentLayer.addTo(map); updateSourceMeta(); updateTileNotice(); }
   function removeSource(name) {
     if (!sourceDefinitions.has(name)) return;
     const wasCurrent = activeSource === name;
@@ -192,7 +218,69 @@
     if (!group) { group = document.createElement('optgroup'); group.dataset.group = groupId; group.label = groupId === 'custom' ? '自定义地图' : '内置地图'; select.appendChild(group); }
     const option = document.createElement('option'); option.value = source.name; option.dataset.sourceName = source.name; option.textContent = source.name; group.appendChild(option); updateSourceLabels();
   }
-  function updateSourceLabels() { const select=document.getElementById('sourceSelect'); if(!select) return; Array.from(select.options).forEach(option => { const name=option.dataset.sourceName || option.value; option.textContent=(name===defaultSource?'★ ':'')+name; }); }
+  function updateSourceLabels() {
+    const select=document.getElementById('sourceSelect');
+    if(!select) return;
+    Array.from(select.options).forEach(option => { const name=option.dataset.sourceName || option.value; option.textContent=(name===defaultSource?'★ ':'')+name; });
+    renderSourceMenu();
+    updateSourcePickerValue();
+  }
+  function updateSourcePickerValue() {
+    const select=document.getElementById('sourceSelect');
+    const value=document.getElementById('sourcePickerValue');
+    if (!select || !value) return;
+    const source=sourceDefinitions.get(select.value);
+    value.textContent=source ? (select.value === defaultSource ? '★ ' : '') + source.name : 'Choose a map';
+  }
+  function renderSourceMenu() {
+    const menu=document.getElementById('sourceMenu');
+    const select=document.getElementById('sourceSelect');
+    if (!select || !menu) return;
+    menu.innerHTML='';
+    const groups=[
+      { label:'内置地图', custom:false },
+      { label:'自定义地图', custom:true }
+    ];
+    groups.forEach(group => {
+      const items=Array.from(sourceDefinitions.values()).filter(source => !!source.custom === group.custom);
+      if (!items.length) return;
+      const heading=document.createElement('div');
+      heading.className='source-menu-group';
+      heading.textContent=group.label;
+      menu.appendChild(heading);
+      items.forEach(source => {
+        const item=document.createElement('button');
+        item.type='button';
+        item.className='source-menu-option';
+        item.setAttribute('role','option');
+        item.setAttribute('aria-selected', String(source.name === select.value));
+        item.dataset.value=source.name;
+        item.textContent=(source.name === defaultSource ? '★ ' : '') + source.name;
+        item.addEventListener('click', () => {
+          select.value=source.name;
+          select.dispatchEvent(new Event('change', { bubbles:true }));
+          closeSourceMenu();
+        });
+        menu.appendChild(item);
+      });
+    });
+  }
+  function closeSourceMenu() {
+    const button=document.getElementById('sourcePickerButton');
+    const menu=document.getElementById('sourceMenu');
+    if (button) button.setAttribute('aria-expanded','false');
+    if (menu) menu.classList.remove('open','open-up');
+  }
+  function toggleSourceMenu() {
+    const button=document.getElementById('sourcePickerButton');
+    const menu=document.getElementById('sourceMenu');
+    if (!button || !menu) return;
+    const opening=button.getAttribute('aria-expanded') !== 'true';
+    if (!opening) { closeSourceMenu(); return; }
+    button.setAttribute('aria-expanded','true');
+    menu.classList.add('open');
+    menu.classList.toggle('open-up', button.getBoundingClientRect().bottom + menu.offsetHeight > window.innerHeight - 12);
+  }
   function updateSourceMeta() {
     const source = sourceDefinitions.get(activeSource);
     const kind = document.getElementById('sourceKind');
@@ -321,7 +409,15 @@
   updateZoomLabel();
   const sourceSelect = document.getElementById('sourceSelect');
   if (sourceSelect) sourceSelect.addEventListener('change', () => {
+    updateSourcePickerValue();
+    renderSourceMenu();
     if (window.dg && window.dg.changeSource) window.dg.changeSource(sourceSelect.value);
+  });
+  const sourcePickerButton = document.getElementById('sourcePickerButton');
+  if (sourcePickerButton) sourcePickerButton.addEventListener('click', toggleSourceMenu);
+  document.addEventListener('click', event => {
+    const picker=document.getElementById('sourcePicker');
+    if (picker && !picker.contains(event.target)) closeSourceMenu();
   });
   const addSourceButton = document.getElementById('addSourceButton');
   if (addSourceButton) addSourceButton.addEventListener('click', () => {
