@@ -1,0 +1,16 @@
+# Gradle and IntelliJ build output
+.gradle/
+build/
+out/
+
+# Local IDE metadata
+.idea/
+*.iml
+
+# Bundled local runtimes and SDKs; install these outside the repository.
+tools/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.log

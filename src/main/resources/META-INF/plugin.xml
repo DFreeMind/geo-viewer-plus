@@ -1,0 +1,20 @@
+<idea-plugin>
+    <id>com.geoviewerplus</id>
+    <name>Geo Viewer Plus</name>
+    <vendor email="support@geoviewer.plus" url="https://www.openstreetmap.org/">Geo Viewer Plus</vendor>
+    <description><![CDATA[
+        A focused Geo Viewer panel for database result sets: map points, lines and polygons with free basemap switching and Z-axis scaling.
+    ]]></description>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.database</depends>
+    <depends>com.intellij.modules.jcef</depends>
+    <actions>
+        <action id="GeoViewerPlus.Open" class="com.geoviewerplus.OpenGeoViewerAction" text="Open Geo Viewer Plus" description="Open the database Geo Viewer Plus panel" icon="/icons/geoViewer.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+            <add-to-group group-id="MainToolBar" anchor="last" />
+            <add-to-group group-id="Console.EditorTableResult.Group" anchor="after" relative-to-action="TableViewColoringGroup" />
+            <add-to-group group-id="Console.InEditorTableResult.Vertical.Group" anchor="after" relative-to-action="TableViewColoringGroup" />
+            <add-to-group group-id="Console.TableResult.Group" anchor="after" relative-to-action="TableViewColoringGroup" />
+        </action>
+    </actions>
+</idea-plugin>
