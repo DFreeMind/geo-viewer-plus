@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.intellij") version "1.17.4"
 }
 
-group = "com.geoviewerplus"
+group = "cn.duqimeng.geo-viewer-plus"
 version = providers.gradleProperty("pluginVersion").get()
 
 repositories {

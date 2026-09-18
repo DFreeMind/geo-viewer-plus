@@ -2,6 +2,8 @@
 
 Geo Viewer Plus is a DataGrip/IntelliJ plugin for inspecting spatial result sets beside a database grid.
 
+Plugin ID: `cn.duqimeng.geo-viewer-plus`
+
 ## Features
 
 - Uses DataGrip's live `DataGrid` context: clicking the action from a table editor or query result opens the current visible result set automatically.
