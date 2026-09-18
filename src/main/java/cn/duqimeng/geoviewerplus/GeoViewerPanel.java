@@ -1,4 +1,4 @@
-package com.geoviewerplus;
+package cn.duqimeng.geoviewerplus;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBLabel;

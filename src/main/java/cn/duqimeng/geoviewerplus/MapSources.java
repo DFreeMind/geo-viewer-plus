@@ -1,4 +1,4 @@
-package com.geoviewerplus;
+package cn.duqimeng.geoviewerplus;
 
 /** Public, no-key basemap endpoints used by the viewer's source switcher. */
 public enum MapSources {
@@ -24,4 +24,3 @@ public enum MapSources {
         return values()[Math.max(0, Math.min(values().length - 1, index))];
     }
 }
-

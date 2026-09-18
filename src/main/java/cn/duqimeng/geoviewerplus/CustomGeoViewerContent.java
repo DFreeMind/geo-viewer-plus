@@ -1,4 +1,4 @@
-package com.geoviewerplus;
+package cn.duqimeng.geoviewerplus;
 
 import com.intellij.database.console.JdbcConsole;
 import com.intellij.database.console.client.DatabaseSessionClientWithFile;

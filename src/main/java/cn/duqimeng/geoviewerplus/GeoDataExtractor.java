@@ -1,4 +1,4 @@
-package com.geoviewerplus;
+package cn.duqimeng.geoviewerplus;
 
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GeoViewer;

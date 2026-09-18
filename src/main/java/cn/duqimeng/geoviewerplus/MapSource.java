@@ -1,4 +1,4 @@
-package com.geoviewerplus;
+package cn.duqimeng.geoviewerplus;
 
 import java.util.Objects;
 

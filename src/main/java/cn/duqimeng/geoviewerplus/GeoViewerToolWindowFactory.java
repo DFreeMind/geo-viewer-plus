@@ -1,4 +1,4 @@
-package com.geoviewerplus;
+package cn.duqimeng.geoviewerplus;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -14,4 +14,3 @@ public final class GeoViewerToolWindowFactory implements ToolWindowFactory, Dumb
         toolWindow.getContentManager().addContent(ContentFactory.getInstance().createContent(panel, "", false));
     }
 }
-
