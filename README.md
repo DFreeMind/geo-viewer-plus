@@ -45,11 +45,15 @@ To publish a later patch release from the maintained Windows build environment, 
 [Environment]::SetEnvironmentVariable("ORG_GRADLE_PROJECT_intellijPlatformPublishingToken", "YOUR_MARKETPLACE_TOKEN", "User")
 ```
 
-Then open a new PowerShell session and run:
+Then create release notes in `release-notes/<new-version>.html`, open a new PowerShell session, and run:
 
 ```powershell
 .\scripts\publish-plugin.ps1 -Bump patch
 ```
+
+The release script injects that HTML into the Marketplace change notes and the IDE's plugin details. You can pass a different file with `-NotesFile path\to\notes.html`.
+
+Keep Marketplace screenshots in `docs/media/<version>/`. The Marketplace Media section currently requires uploading those images in the plugin admin page; the official Gradle publish task does not manage page media.
 
 Use `-Bump minor` for a backward-compatible feature group or `-Bump major` for a breaking release. The script checks for a clean worktree, increments `pluginVersion`, runs `publishPlugin`, commits the release, and pushes the Git tag. The token is never stored in the repository.
 

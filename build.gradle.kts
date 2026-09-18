@@ -38,6 +38,10 @@ tasks {
     patchPluginXml {
         sinceBuild.set("261")
         untilBuild.set("262.*")
+        val releaseNotesFile = providers.gradleProperty("releaseNotesFile")
+        if (releaseNotesFile.isPresent) {
+            changeNotes.set(file(releaseNotesFile.get()).readText())
+        }
     }
 
     publishPlugin {

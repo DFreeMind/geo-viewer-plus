@@ -2,6 +2,7 @@
 param(
     [ValidateSet("patch", "minor", "major")]
     [string]$Bump = "patch",
+    [string]$NotesFile,
     [switch]$NoPush
 )
 
@@ -34,10 +35,15 @@ switch ($Bump) {
     "patch" { $patch++ }
 }
 $newVersion = "$major.$minor.$patch"
+$notesPath = if ($NotesFile) { (Resolve-Path -LiteralPath $NotesFile).Path } else { Join-Path $repo "release-notes\$newVersion.html" }
+if (-not (Test-Path -LiteralPath $notesPath)) {
+    throw "Release notes were not found at $notesPath. Create release-notes\$newVersion.html or pass -NotesFile."
+}
 $newLines = $lines | ForEach-Object {
     if ($_ -match '^pluginVersion=') { "pluginVersion=$newVersion" } else { $_ }
 }
 Set-Content -LiteralPath $propertiesPath -Value $newLines -Encoding utf8
+$env:ORG_GRADLE_PROJECT_releaseNotesFile = $notesPath
 
 $gradle = Join-Path $repo "tools\gradle-8.10.2\bin\gradle.bat"
 if (-not (Test-Path -LiteralPath $gradle)) {
