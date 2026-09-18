@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.geoviewerplus"
-version = "0.6.0"
+version = providers.gradleProperty("pluginVersion").get()
 
 repositories {
     mavenCentral()
@@ -36,8 +36,13 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("262")
+        sinceBuild.set("261")
         untilBuild.set("262.*")
+    }
+
+    publishPlugin {
+        token = providers.gradleProperty("intellijPlatformPublishingToken")
+        channels = listOf("default")
     }
 
     withType<JavaCompile> {

@@ -23,7 +23,18 @@ $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 & '.\tools\gradle-8.10.2\bin\gradle.bat' buildPlugin --no-daemon
 ```
 
-The installable ZIP is written to `build/distributions/geo-viewer-plus-0.6.0.zip`.
+The installable ZIP is written to `build/distributions/geo-viewer-plus-0.1.0.zip`.
+
+## Versioning and releases
+
+The version is defined once in `gradle.properties` as `pluginVersion`. Local rebuilds and normal fixes reuse the same version. Only a Marketplace release changes it:
+
+- `0.1.0` — first public preview release.
+- Patch fixes increment the patch number, for example `0.1.1`.
+- New backward-compatible feature groups increment the minor number, for example `0.2.0`.
+- Breaking changes increment the major number after the initial preview phase.
+
+The first Marketplace upload must be done manually from `build/distributions/geo-viewer-plus-0.1.0.zip`. After the plugin page exists, later releases can use `publishPlugin` with the `intellijPlatformPublishingToken` Gradle property supplied through an environment variable or CI secret.
 
 After installing the updated ZIP, restart DataGrip (or use **File > Invalidate Caches / Restart** if the old action is still cached). The map icon is added to the main toolbar; it can also be found under **Tools > Open Geo Viewer Plus**. The viewer is placed below the current result panel.
 
