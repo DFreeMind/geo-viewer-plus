@@ -48,6 +48,8 @@ import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -306,31 +308,39 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     private MapSource showMapSourceDialog(MapSource initial) {
-        JTextField name = new JTextField(initial == null ? "My map" : initial.name());
-        JTextField url = new JTextField(initial == null ? "https://{s}.example.com/{z}/{x}/{y}.png" : initial.template());
-        JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution());
-        JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains());
+        JTextField name = new JTextField(initial == null ? "My map" : initial.name(), 42);
+        JTextField url = new JTextField(initial == null ? "https://{s}.example.com/{z}/{x}/{y}.png" : initial.template(), 42);
+        JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution(), 42);
+        JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains(), 42);
         JCheckBox tms = new JCheckBox("TMS Y axis (invert tile row)", initial != null && initial.tms());
         JComboBox<MapSourceType> type = new JComboBox<>(MapSourceType.values());
-        JTextField vectorLayer = new JTextField(initial == null ? "sliced" : initial.vectorLayer());
+        JTextField vectorLayer = new JTextField(initial == null ? "sliced" : initial.vectorLayer(), 42);
         if (initial != null) type.setSelectedItem(initial.type());
+        JBLabel vectorLayerLabel = new JBLabel("MVT layer names");
+        JPanel fields = new JPanel(new GridBagLayout());
+        fields.setBorder(JBUI.Borders.empty(8, 12, 4, 12));
+        fields.setPreferredSize(new Dimension(620, 390));
+        int row = 0;
+        row = addFormRow(fields, row, "Name", name, "Shown in the map source menu.");
+        row = addFormRow(fields, row, "Source type", type, "Raster sources use XYZ/TMS tiles; MVT sources use protobuf vector tiles.");
+        row = addFormRow(fields, row, "Tile URL template", url, "Use {z}, {x}, {y}; add {s} when the server uses subdomains.");
+        row = addFormRow(fields, row, "Attribution", attribution, "Keep the provider credit visible on the map.");
+        row = addFormRow(fields, row, "Subdomains", subdomains, "For {s}, for example abc or 0123. Leave blank when unused.");
+        row = addFormRow(fields, row, vectorLayerLabel, vectorLayer, "For MVT, enter names such as roads, water, landuse; comma-separate multiple names.");
+        GridBagConstraints checkboxConstraints = new GridBagConstraints();
+        checkboxConstraints.gridx = 1; checkboxConstraints.gridy = row; checkboxConstraints.gridwidth = 2;
+        checkboxConstraints.anchor = GridBagConstraints.WEST; checkboxConstraints.insets = new Insets(8, 0, 4, 0);
+        fields.add(tms, checkboxConstraints);
         type.addActionListener(ignored -> {
             boolean mvt = type.getSelectedItem() == MapSourceType.MVT;
             vectorLayer.setEnabled(mvt);
+            vectorLayerLabel.setEnabled(mvt);
             tms.setEnabled(!mvt);
             if (mvt) tms.setSelected(false);
         });
-        JPanel fields = new JPanel(new GridLayout(0, 1, 4, 4));
-        fields.add(new JLabel("Name")); fields.add(name);
-        fields.add(new JLabel("Source type")); fields.add(type);
-        fields.add(new JLabel("Tile URL template (XYZ/TMS)")); fields.add(url);
-        fields.add(new JLabel("Attribution")); fields.add(attribution);
-        fields.add(new JLabel("Subdomains for {s} (e.g. abc or 1234)")); fields.add(subdomains);
-        fields.add(new JLabel("MVT layer name (usually sliced; comma-separated for multiple layers)")); fields.add(vectorLayer);
-        fields.add(tms);
-        type.setSelectedItem(initial == null ? MapSourceType.RASTER_XYZ : initial.type());
         boolean initialMvt = type.getSelectedItem() == MapSourceType.MVT;
         vectorLayer.setEnabled(initialMvt);
+        vectorLayerLabel.setEnabled(initialMvt);
         tms.setEnabled(!initialMvt);
         if (initialMvt) tms.setSelected(false);
         String title = initial == null ? "Add Custom Map Source" : "Edit Custom Map Source";
@@ -344,6 +354,33 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         }
         MapSourceType sourceType = (MapSourceType) type.getSelectedItem();
         return new MapSource(sourceName, template, attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim(), true, sourceType, vectorLayer.getText().trim());
+    }
+
+    private static int addFormRow(JPanel panel, int row, String label, JComponent field, String help) {
+        return addFormRow(panel, row, new JBLabel(label), field, help);
+    }
+
+    private static int addFormRow(JPanel panel, int row, JComponent label, JComponent field, String help) {
+        GridBagConstraints labelConstraints = new GridBagConstraints();
+        labelConstraints.gridx = 0; labelConstraints.gridy = row; labelConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        labelConstraints.insets = new Insets(6, 0, 2, 14);
+        panel.add(label, labelConstraints);
+
+        GridBagConstraints fieldConstraints = new GridBagConstraints();
+        fieldConstraints.gridx = 1; fieldConstraints.gridy = row; fieldConstraints.gridwidth = 2;
+        fieldConstraints.weightx = 1; fieldConstraints.fill = GridBagConstraints.HORIZONTAL;
+        fieldConstraints.insets = new Insets(3, 0, 1, 0);
+        panel.add(field, fieldConstraints);
+
+        if (help == null || help.isBlank()) return row + 1;
+        JBLabel hint = new JBLabel(help);
+        hint.setForeground(JBColor.GRAY);
+        GridBagConstraints helpConstraints = new GridBagConstraints();
+        helpConstraints.gridx = 1; helpConstraints.gridy = row + 1; helpConstraints.gridwidth = 2;
+        helpConstraints.weightx = 1; helpConstraints.fill = GridBagConstraints.HORIZONTAL;
+        helpConstraints.insets = new Insets(0, 0, 3, 0);
+        panel.add(hint, helpConstraints);
+        return row + 2;
     }
 
     private void loadPage() {
@@ -390,13 +427,15 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         return List.of(
                 new MapSource("高德道路（国内）", "https://wprd0{s}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8&ltype=11", "© 高德地图 · GCJ-02", false, "1234"),
                 new MapSource("高德道路（简洁）", "https://wprd0{s}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8", "© 高德地图 · GCJ-02", false, "1234"),
+                new MapSource("高德道路（轻量）", "https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}", "© 高德地图 · GCJ-02", false, "1234"),
                 new MapSource("高德影像（国内）", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}", "© 高德地图 · 影像 · GCJ-02", false, "1234"),
                 new MapSource("高德影像（含路网）", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&ltype=11&x={x}&y={y}&z={z}", "© 高德地图 · 影像/路网 · GCJ-02", false, "1234"),
                 new MapSource("OSM Standard", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors", false),
                 new MapSource("OSM Humanitarian", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "© OpenStreetMap contributors · HOT", false, "abc"),
                 new MapSource("OpenTopoMap", "https://tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors · SRTM", false),
                 new MapSource("Esri World Imagery", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "© Esri", false),
-                new MapSource("腾讯道路（实验）", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&version=376", "© 腾讯地图 · 坐标系请按数据源校正", false, "0123")
+                new MapSource("腾讯道路（标准·实验）", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&version=376", "© 腾讯地图 · 坐标系请按数据源校正", false, "0123"),
+                new MapSource("腾讯道路（简洁·实验）", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=2&version=376", "© 腾讯地图 · 坐标系请按数据源校正", false, "0123")
         );
     }
 

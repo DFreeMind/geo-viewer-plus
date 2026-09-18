@@ -58,6 +58,7 @@
     .toolbar-actions .toolbar-default-button { color:#bfdbfe; }
     .toolbar-manage-actions .toolbar-remove-button { color:#fda4af; }
     .toolbar-source-meta { display:flex; align-items:center; justify-content:space-between; min-height:21px; margin:0 2px 2px; color:#94a3b8; font-size:10px; }
+    .toolbar-source-meta span:last-child { max-width:165px; overflow:hidden; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
     .toolbar-source-kind { color:#a7f3d0; font-weight:650; }
     .toolbar-source-kind.custom { color:#fcd34d; }
     .floating-toolbar-note { margin-top:10px; padding-top:9px; border-top:1px solid rgba(71,85,105,.55); color:#64748b; font-size:10px; line-height:1.45; }
@@ -99,10 +100,29 @@
   let defaultSource = '';
   function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function template(t) { return t.replaceAll('{s}', '{s}'); }
-  function vectorTileStyle(properties) {
-    const value = String((properties && (properties.class || properties.kind || properties.type || properties.category)) || '').toLowerCase();
-    const palette = value.includes('water') || value.includes('river') ? ['#38bdf8', .32] : value.includes('park') || value.includes('forest') ? ['#34d399', .28] : value.includes('road') || value.includes('highway') ? ['#fbbf24', .46] : ['#a78bfa', .25];
-    return { color:palette[0], weight:1.5, opacity:.9, fillColor:palette[0], fillOpacity:palette[1], radius:4, fill:true };
+  function vectorTileStyleForLayer(layerName) {
+    const layer = String(layerName || '').toLowerCase();
+    return (properties, zoom) => {
+      const value = String((properties && (properties.class || properties.kind || properties.type || properties.category || properties.subclass)) || '').toLowerCase();
+      const level = Number.isFinite(zoom) ? zoom : map.getZoom();
+      const road = layer.includes('road') || layer.includes('transport') || layer.includes('highway') || value.includes('road') || value.includes('highway');
+      const water = layer.includes('water') || layer.includes('river') || layer.includes('ocean') || value.includes('water') || value.includes('river');
+      const green = layer.includes('park') || layer.includes('landuse') || layer.includes('landcover') || layer.includes('forest') || value.includes('park') || value.includes('forest');
+      const building = layer.includes('building') || value.includes('building');
+      const boundary = layer.includes('boundary') || layer.includes('admin');
+      const point = layer.includes('poi') || layer.includes('place') || layer.includes('label') || layer.includes('point');
+      if (water) return { color:'#4f86a4', weight:.55, opacity:.62, fillColor:'#17384c', fillOpacity:.62, fill:true };
+      if (green) return { color:'#517d68', weight:.45, opacity:.48, fillColor:'#214936', fillOpacity:.34, fill:true };
+      if (building) return { color:'#64748b', weight:.35, opacity:.32, fillColor:'#475569', fillOpacity:.13, fill:true };
+      if (road) {
+        const major = value.includes('motorway') || value.includes('trunk') || value.includes('primary');
+        const minor = value.includes('path') || value.includes('track') || value.includes('service');
+        return { color:major ? '#c9b98a' : '#8b98a8', weight:major ? Math.min(2.4, .7 + level / 10) : minor ? .38 : .62, opacity:level < 7 ? .35 : .7, fill:false };
+      }
+      if (boundary) return { color:'#7884a0', weight:.55, opacity:.45, dashArray:'3 4', fill:false };
+      if (point) return { color:'#d3a76a', weight:.4, opacity:.62, fillColor:'#d3a76a', fillOpacity:.52, radius:Math.min(3.5, 1.5 + level / 10), fill:true };
+      return { color:'#617087', weight:.42, opacity:.34, fillColor:'#334155', fillOpacity:.06, fill:false };
+    };
   }
   function createSourceLayer(source) {
     const options = { maxZoom:22, attribution:source.attribution || '', tms:!!source.tms };
@@ -111,8 +131,10 @@
       if (!L.vectorGrid || !L.vectorGrid.protobuf) throw new Error('MVT support library is unavailable');
       const layerNames = (source.vectorLayer || 'sliced').split(',').map(name => name.trim()).filter(Boolean);
       options.interactive = false;
+      options.rendererFactory = L.canvas.tile;
       options.vectorTileLayerStyles = {};
-      layerNames.forEach(name => { options.vectorTileLayerStyles[name] = vectorTileStyle; });
+      const knownLayerNames = ['water', 'waterway', 'landcover', 'landuse', 'park', 'forest', 'building', 'road', 'roads', 'transportation', 'highway', 'boundary', 'admin', 'place', 'poi', 'label', 'point'];
+      [...new Set([...layerNames, ...knownLayerNames])].forEach(name => { options.vectorTileLayerStyles[name] = vectorTileStyleForLayer(name); });
       return L.vectorGrid.protobuf(template(source.template), options);
     }
     return L.tileLayer(template(source.template), options);
