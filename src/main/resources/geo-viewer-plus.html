@@ -30,56 +30,58 @@
     .feature-key { color:#86efac; font-weight:600; overflow-wrap:anywhere; }
     .feature-value { color:#e2e8f0; min-width:0; overflow-wrap:anywhere; white-space:normal; }
     .map-notice { color:#fbbf24; }
-    .floating-toolbar { position:absolute; z-index:1000; top:14px; right:14px; width:304px; padding:10px; border:1px solid rgba(148,163,184,.35); border-radius:15px; background:rgba(15,23,42,.92); box-shadow:0 16px 38px rgba(0,0,0,.32); color:#cbd5e1; backdrop-filter:blur(14px); transition:width .18s ease, padding .18s ease, background .18s ease, border-color .18s ease; }
+    .map-retry-button { display:none; pointer-events:auto; padding:3px 7px; border:1px solid rgba(251,191,36,.45); border-radius:6px; background:rgba(120,53,15,.7); color:#fde68a; cursor:pointer; }
+    .map-retry-button.visible { display:inline-flex; }
+    .floating-toolbar { position:absolute; z-index:1000; top:14px; right:14px; width:318px; padding:9px; border:1px solid rgba(148,163,184,.28); border-radius:18px; background:rgba(10,18,34,.94); box-shadow:0 20px 48px rgba(0,0,0,.34); color:#cbd5e1; backdrop-filter:blur(18px); transition:width .18s ease, padding .18s ease, background .18s ease, border-color .18s ease; }
     .floating-toolbar.collapsed { width:auto; padding:0; border-color:transparent; background:transparent; box-shadow:none; backdrop-filter:none; }
-    .toolbar-toggle { display:flex; align-items:center; gap:7px; width:100%; height:32px; padding:0 9px; border:1px solid rgba(148,163,184,.36); border-radius:9px; background:rgba(15,23,42,.94); color:#dbeafe; cursor:pointer; box-shadow:0 7px 18px rgba(0,0,0,.22); }
-    .collapsed .toolbar-toggle { width:40px; height:40px; justify-content:center; padding:0; border-radius:12px; background:rgba(15,23,42,.94); }
-    .toolbar-toggle:hover { border-color:#60a5fa; background:#1e293b; }
-    .toolbar-toggle-icon { color:#60a5fa; font-size:15px; line-height:1; }
-    .toolbar-toggle-label { flex:1; text-align:left; font-size:11px; font-weight:700; letter-spacing:.06em; }
+    .toolbar-toggle { display:flex; align-items:center; gap:8px; width:100%; height:36px; padding:0 10px; border:1px solid rgba(148,163,184,.36); border-radius:11px; background:rgba(15,23,42,.96); color:#dbeafe; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.24); }
+    .collapsed .toolbar-toggle { width:42px; height:42px; justify-content:center; padding:0; border-radius:13px; background:rgba(15,23,42,.96); }
+    .toolbar-toggle:hover { border-color:#60a5fa; background:#172554; }
+    .toolbar-toggle-icon { display:inline-flex; color:#93c5fd; }
+    .toolbar-toggle-icon svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .toolbar-toggle-label { flex:1; text-align:left; font-size:10px; font-weight:750; letter-spacing:.12em; }
     .collapsed .toolbar-toggle-label { display:none; }
     .toolbar-toggle-chevron { color:#94a3b8; font-size:14px; transition:transform .18s ease; }
     .collapsed .toolbar-toggle-chevron { display:none; }
     .floating-toolbar:not(.collapsed) .toolbar-toggle-chevron { transform:rotate(180deg); }
-    .toolbar-panel { padding:11px 3px 2px; }
+    .toolbar-panel { padding:13px 3px 3px; }
     .floating-toolbar.collapsed .toolbar-panel { display:none; }
-    .floating-toolbar-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 2px; }
-    .floating-toolbar-title { color:#f8fafc; font-size:11px; font-weight:750; letter-spacing:.08em; }
-    .floating-toolbar-geometry { max-width:100px; overflow:hidden; color:#93c5fd; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
-    .toolbar-section-label { display:block; margin:0 2px 6px; color:#64748b; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
-    .floating-toolbar select { width:100%; height:36px; margin-bottom:8px; padding:0 9px; border:1px solid #475569; border-radius:9px; background:#1e293b; color:#f8fafc; outline:none; cursor:pointer; }
+    .floating-toolbar-head { display:flex; justify-content:space-between; align-items:flex-start; margin:0 2px 13px; }
+    .floating-toolbar-title { color:#f8fafc; font-size:12px; font-weight:750; letter-spacing:.08em; }
+    .floating-toolbar-subtitle { margin-top:3px; color:#64748b; font-size:10px; }
+    .floating-toolbar-geometry { max-width:100px; overflow:hidden; padding:3px 7px; border:1px solid rgba(96,165,250,.22); border-radius:7px; color:#93c5fd; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+    .toolbar-group { margin-bottom:10px; padding:10px; border:1px solid rgba(71,85,105,.55); border-radius:12px; background:rgba(15,23,42,.62); }
+    .toolbar-section-label { display:flex; align-items:center; justify-content:space-between; margin:0 0 7px; color:#94a3b8; font-size:10px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+    .toolbar-section-label::after { content:'BASE MAP'; color:#64748b; font-size:9px; letter-spacing:.08em; }
+    .floating-toolbar select { width:100%; height:38px; margin-bottom:7px; padding:0 10px; border:1px solid #475569; border-radius:9px; background:#1e293b; color:#f8fafc; outline:none; cursor:pointer; }
     .floating-toolbar select:focus { border-color:#60a5fa; box-shadow:0 0 0 2px rgba(96,165,250,.2); }
+    .toolbar-source-meta { display:flex; align-items:center; justify-content:space-between; min-height:21px; color:#94a3b8; font-size:10px; }
+    .toolbar-source-meta span:last-child { max-width:165px; overflow:hidden; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
+    .toolbar-source-kind { padding:2px 6px; border-radius:5px; background:rgba(16,185,129,.12); color:#a7f3d0; font-weight:650; }
+    .toolbar-source-kind.custom { background:rgba(234,179,8,.14); color:#fcd34d; }
     .toolbar-actions, .toolbar-manage-actions { display:grid; grid-template-columns:1fr 1.2fr; gap:7px; }
     .toolbar-manage-actions { grid-template-columns:1fr 1fr; margin-top:7px; }
-    .toolbar-actions button, .toolbar-manage-actions button { width:100%; height:32px; border:1px solid #475569; border-radius:8px; background:#263449; color:#dbeafe; cursor:pointer; transition:background .16s ease, border-color .16s ease, transform .16s ease; }
+    .toolbar-actions button, .toolbar-manage-actions button { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; height:33px; border:1px solid #475569; border-radius:8px; background:#263449; color:#dbeafe; cursor:pointer; transition:background .16s ease, border-color .16s ease, transform .16s ease; }
     .toolbar-actions button:hover, .toolbar-manage-actions button:hover { background:#334155; border-color:#60a5fa; transform:translateY(-1px); }
     .toolbar-actions button:active, .toolbar-manage-actions button:active { transform:translateY(0); }
     .toolbar-actions button:disabled, .toolbar-manage-actions button:disabled { cursor:not-allowed; opacity:.42; transform:none; }
     .toolbar-actions .toolbar-default-button { color:#bfdbfe; }
     .toolbar-manage-actions .toolbar-remove-button { color:#fda4af; }
-    .toolbar-source-meta { display:flex; align-items:center; justify-content:space-between; min-height:21px; margin:0 2px 2px; color:#94a3b8; font-size:10px; }
-    .toolbar-source-meta span:last-child { max-width:165px; overflow:hidden; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
-    .toolbar-source-kind { color:#a7f3d0; font-weight:650; }
-    .toolbar-source-kind.custom { color:#fcd34d; }
-    .floating-toolbar-note { margin-top:10px; padding-top:9px; border-top:1px solid rgba(71,85,105,.55); color:#64748b; font-size:10px; line-height:1.45; }
-    .selection-summary { position:absolute; z-index:1000; right:14px; bottom:12px; max-width:260px; padding:7px 10px; border:1px solid rgba(251,146,60,.48); border-radius:9px; background:rgba(67,32,17,.88); color:#fed7aa; box-shadow:0 5px 15px rgba(0,0,0,.2); pointer-events:none; opacity:0; transform:translateY(5px); transition:opacity .18s ease, transform .18s ease; }
-    .selection-summary.visible { opacity:1; transform:translateY(0); }
+    .toolbar-icon { display:inline-flex; }
+    .toolbar-icon svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .floating-toolbar-note { margin:2px 3px 0; color:#64748b; font-size:10px; line-height:1.5; }
   </style>
 </head>
 <body>
 <div id="map"></div>
-<div class="map-status"><span class="status-dot"></span><strong id="count">0</strong> features · <span id="geometry">waiting for result set</span> · <span id="zoom" class="zoom-level">Z=5</span><span id="mapNotice" class="map-notice"></span></div>
-<div class="selection-summary" id="selectionSummary" aria-live="polite"></div>
+<div class="map-status"><span class="status-dot"></span><strong id="count">0</strong> features · <span id="geometry">waiting for result set</span> · <span id="zoom" class="zoom-level">Z=5</span><span id="mapNotice" class="map-notice"></span><button id="retrySourceButton" class="map-retry-button" type="button">Retry</button></div>
 <div class="floating-toolbar collapsed" id="floatingToolbar">
-  <button class="toolbar-toggle" id="toolbarToggle" type="button" aria-expanded="false" title="Map controls"><span class="toolbar-toggle-icon">✦</span><span class="toolbar-toggle-label">MAP CONTROLS</span><span class="toolbar-toggle-chevron">⌄</span></button>
+  <button class="toolbar-toggle" id="toolbarToggle" type="button" aria-expanded="false" title="Map controls"><span class="toolbar-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M8 14v6"/></svg></span><span class="toolbar-toggle-label">MAP CONTROLS</span><span class="toolbar-toggle-chevron">⌄</span></button>
   <div class="toolbar-panel" id="toolbarPanel">
-    <div class="floating-toolbar-head"><span class="floating-toolbar-title">GEO VIEWER PLUS</span><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
-    <span class="toolbar-section-label">Map layers</span>
-    <select id="sourceSelect" aria-label="Map source"></select>
-    <div class="toolbar-source-meta"><span id="sourceKind" class="toolbar-source-kind">Built-in map</span><span id="sourceAttribution"></span></div>
-    <div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button">☆ Set default</button><button id="addSourceButton" type="button">＋ Add custom</button></div>
-    <div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled>✎ Edit custom</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled>⌫ Remove</button></div>
-    <div class="floating-toolbar-note">Built-in maps are protected. Custom maps can be edited or removed here. Click a feature to select its row; select a row to locate it.</div>
+    <div class="floating-toolbar-head"><div><div class="floating-toolbar-title">MAP CONTROLS</div><div class="floating-toolbar-subtitle">Choose a base map for this result set</div></div><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
+    <div class="toolbar-group"><span class="toolbar-section-label">Map layers</span><select id="sourceSelect" aria-label="Map source"></select><div class="toolbar-source-meta"><span id="sourceKind" class="toolbar-source-kind">Built-in map</span><span id="sourceAttribution"></span></div></div>
+    <div class="toolbar-group"><span class="toolbar-section-label">Manage</span><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></span>Set default</button><button id="addSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Add custom</button></div><div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11.8-11.8a2.8 2.8 0 0 0-4-4L4 16Z"/><path d="m14.5 5.5 4 4"/></svg></span>Edit custom</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 14h8l1-14"/></svg></span>Remove</button></div></div>
+    <div class="floating-toolbar-note">Built-in maps are protected. Custom maps can be edited or removed here. Select a row or a feature to keep the table and map in sync.</div>
   </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -146,7 +148,13 @@
     catch (error) { layerHealth[source.name] = { errors:1, retries:0, message:String(error.message || error) }; ensureSourceOption(source); if (!currentLayer) activeSource = source.name; updateSourceMeta(); updateTileNotice(); return; }
     ensureSourceOption(source);
     layerHealth[source.name] = { errors:0, retries:0 };
-    layer.on('tileload', updateTileNotice);
+    layer.on('tileload', function() {
+      const health = layerHealth[source.name];
+      health.errors = Math.max(0, health.errors - 1);
+      health.retries = 0;
+      health.message = '';
+      updateTileNotice();
+    });
     layer.on('tileerror', function() {
       const health = layerHealth[source.name];
       health.errors++;
@@ -200,10 +208,26 @@
   function setDefaultSource(name) { if (!layers[name]) return; defaultSource=name; updateSourceLabels(); }
   function updateTileNotice() {
     const notice = document.getElementById('mapNotice');
+    const retry = document.getElementById('retrySourceButton');
     const health = layerHealth[activeSource];
-    if (!notice || !health || health.errors === 0) { if (notice) notice.textContent = ''; return; }
-    if (health.message) { notice.textContent = ' · ' + health.message; return; }
-    notice.textContent = ' · ' + health.errors + ' tile errors (network/source)';
+    if (!notice || !health || health.errors === 0) {
+      if (notice) notice.textContent = '';
+      if (retry) retry.classList.remove('visible');
+      return;
+    }
+    if (health.message) notice.textContent = ' · ' + health.message;
+    else notice.textContent = ' · ' + health.errors + ' tile errors';
+    if (retry) retry.classList.add('visible');
+  }
+  function retryActiveSource() {
+    const layer = layers[activeSource];
+    const health = layerHealth[activeSource];
+    if (!layer || !health) return;
+    health.errors = 0;
+    health.retries = 0;
+    health.message = '';
+    if (layer.redraw) layer.redraw();
+    updateTileNotice();
   }
   function setStyle(feature, selectedFlag) {
     if (feature.setStyle) feature.setStyle(selectedFlag ? selectedStyle : defaultStyle);
@@ -259,7 +283,7 @@
     else throw new Error('Unsupported geometry type: ' + type);
     return layer;
   }
-  function clearFeatures() { features.forEach(f => f.remove()); features.clear(); selected=[]; const summary=document.getElementById('selectionSummary'); if(summary){ summary.textContent=''; summary.classList.remove('visible'); } }
+  function clearFeatures() { features.forEach(f => f.remove()); features.clear(); selected=[]; }
   function addWkt(wkt, row, attributes) {
     try {
       const object = parseWkt(wkt);
@@ -274,11 +298,6 @@
   function focusRows(rows, openPopup) {
     selected.forEach(i => { const f=features.get(i); if(f) setStyle(f,false); }); selected=[];
     rows.forEach(i => { const f=features.get(Number(i)); if(f){ setStyle(f,true); selected.push(Number(i)); } });
-    const summary = document.getElementById('selectionSummary');
-    if (summary) {
-      summary.textContent = selected.length === 0 ? '' : selected.length === 1 ? 'Linked to result row ' + (selected[0] + 1) : selected.length + ' result rows selected';
-      summary.classList.toggle('visible', selected.length > 0);
-    }
     if (selected.length===1) {
       const f=features.get(selected[0]);
       if (!openPopup && f && f.getBounds) map.fitBounds(f.getBounds().pad(.25), { maxZoom:16, animate:true, duration:.35 });
@@ -320,6 +339,8 @@
   if (removeSourceButton) removeSourceButton.addEventListener('click', () => {
     if (window.dg && window.dg.removeMapSource && sourceSelect) window.dg.removeMapSource(sourceSelect.value);
   });
+  const retrySourceButton = document.getElementById('retrySourceButton');
+  if (retrySourceButton) retrySourceButton.addEventListener('click', retryActiveSource);
   const floatingToolbar = document.getElementById('floatingToolbar');
   const toolbarToggle = document.getElementById('toolbarToggle');
   if (floatingToolbar && toolbarToggle) {

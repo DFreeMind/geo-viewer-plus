@@ -52,6 +52,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.FlowLayout;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.InputStream;
@@ -344,16 +346,41 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         tms.setEnabled(!initialMvt);
         if (initialMvt) tms.setSelected(false);
         String title = initial == null ? "Add Custom Map Source" : "Edit Custom Map Source";
-        int result = JOptionPane.showConfirmDialog(grid.getMainResultViewComponent(), fields, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (result != JOptionPane.OK_OPTION) return null;
-        String sourceName = name.getText().trim();
-        String template = url.getText().trim();
-        if (sourceName.isBlank() || template.isBlank()) {
-            Messages.showWarningDialog(grid.getMainResultViewComponent(), "Name and tile URL template are required.", "Geo Viewer Plus");
-            return null;
-        }
-        MapSourceType sourceType = (MapSourceType) type.getSelectedItem();
-        return new MapSource(sourceName, template, attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim(), true, sourceType, vectorLayer.getText().trim());
+        Window owner = SwingUtilities.getWindowAncestor(grid.getMainResultViewComponent());
+        JDialog dialog = new JDialog(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        JPanel root = new JPanel(new BorderLayout(0, 8));
+        root.setBorder(JBUI.Borders.empty(8));
+        root.add(fields, BorderLayout.CENTER);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JButton cancel = new JButton("Cancel");
+        JButton save = new JButton(initial == null ? "Add source" : "Save changes");
+        actions.add(cancel);
+        actions.add(save);
+        root.add(actions, BorderLayout.SOUTH);
+        dialog.setContentPane(root);
+
+        MapSource[] result = new MapSource[1];
+        cancel.addActionListener(ignored -> dialog.dispose());
+        save.addActionListener(ignored -> {
+            String sourceName = name.getText().trim();
+            String template = url.getText().trim();
+            if (sourceName.isBlank() || template.isBlank()) {
+                JOptionPane.showMessageDialog(dialog, "Name and tile URL template are required.", "Geo Viewer Plus", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            MapSourceType sourceType = (MapSourceType) type.getSelectedItem();
+            result[0] = new MapSource(sourceName, template, attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim(), true, sourceType, vectorLayer.getText().trim());
+            dialog.dispose();
+        });
+        dialog.getRootPane().setDefaultButton(save);
+        dialog.setResizable(false);
+        dialog.pack();
+        dialog.setMinimumSize(new Dimension(680, 500));
+        dialog.setLocationRelativeTo(owner);
+        dialog.setVisible(true);
+        return result[0];
     }
 
     private static int addFormRow(JPanel panel, int row, String label, JComponent field, String help) {
