@@ -82,6 +82,7 @@
   </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
 <script>
   const map = L.map('map', { zoomControl:true, preferCanvas:true }).setView([43.79,87.62], 5);
   const layers = {};
@@ -98,11 +99,29 @@
   let defaultSource = '';
   function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function template(t) { return t.replaceAll('{s}', '{s}'); }
+  function vectorTileStyle(properties) {
+    const value = String((properties && (properties.class || properties.kind || properties.type || properties.category)) || '').toLowerCase();
+    const palette = value.includes('water') || value.includes('river') ? ['#38bdf8', .32] : value.includes('park') || value.includes('forest') ? ['#34d399', .28] : value.includes('road') || value.includes('highway') ? ['#fbbf24', .46] : ['#a78bfa', .25];
+    return { color:palette[0], weight:1.5, opacity:.9, fillColor:palette[0], fillOpacity:palette[1], radius:4, fill:true };
+  }
+  function createSourceLayer(source) {
+    const options = { maxZoom:22, attribution:source.attribution || '', tms:!!source.tms };
+    if (source.template.indexOf('{s}') >= 0) options.subdomains = (source.subdomains || 'abc').split('');
+    if (source.type === 'mvt') {
+      if (!L.vectorGrid || !L.vectorGrid.protobuf) throw new Error('MVT support library is unavailable');
+      const layerNames = (source.vectorLayer || 'sliced').split(',').map(name => name.trim()).filter(Boolean);
+      options.interactive = false;
+      options.vectorTileLayerStyles = {};
+      layerNames.forEach(name => { options.vectorTileLayerStyles[name] = vectorTileStyle; });
+      return L.vectorGrid.protobuf(template(source.template), options);
+    }
+    return L.tileLayer(template(source.template), options);
+  }
   function addSource(source) {
     sourceDefinitions.set(source.name, source);
-    const options = { maxZoom: 22, attribution: source.attribution || '', tms: !!source.tms };
-    if (source.template.indexOf('{s}') >= 0) options.subdomains = (source.subdomains || 'abc').split('');
-    const layer = L.tileLayer(template(source.template), options);
+    let layer;
+    try { layer = createSourceLayer(source); }
+    catch (error) { layerHealth[source.name] = { errors:1, retries:0, message:String(error.message || error) }; ensureSourceOption(source); if (!currentLayer) activeSource = source.name; updateSourceMeta(); updateTileNotice(); return; }
     ensureSourceOption(source);
     layerHealth[source.name] = { errors:0, retries:0 };
     layer.on('tileload', updateTileNotice);
@@ -119,9 +138,9 @@
     if (!currentLayer) { currentLayer = layers[source.name]; currentLayer.addTo(map); activeSource = source.name; }
   }
   function addSourceFromJava(source, selectIt) { addSource(source); if (selectIt) { const select = document.getElementById('sourceSelect'); if (select) select.value = source.name; switchSource(source.name); } if (window.dg && window.dg.sourcesChanged) window.dg.sourcesChanged(Object.keys(layers)); }
-  function switchSource(name) { if (!layers[name]) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name]; currentLayer.addTo(map); activeSource = name; const select = document.getElementById('sourceSelect'); if (select) select.value = name; updateSourceMeta(); updateTileNotice(); }
+  function switchSource(name) { if (!sourceDefinitions.has(name)) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name] || null; activeSource = name; const select = document.getElementById('sourceSelect'); if (select) select.value = name; if (currentLayer) currentLayer.addTo(map); updateSourceMeta(); updateTileNotice(); }
   function removeSource(name) {
-    if (!layers[name]) return;
+    if (!sourceDefinitions.has(name)) return;
     const wasCurrent = activeSource === name;
     if (currentLayer === layers[name]) map.removeLayer(currentLayer);
     delete layers[name]; delete layerHealth[name]; sourceDefinitions.delete(name);
@@ -151,7 +170,7 @@
     const edit = document.getElementById('editSourceButton');
     const remove = document.getElementById('removeSourceButton');
     const custom = !!(source && source.custom);
-    if (kind) { kind.textContent = custom ? 'Custom map' : 'Built-in map'; kind.classList.toggle('custom', custom); }
+    if (kind) { kind.textContent = source && source.type === 'mvt' ? 'MVT vector source' : custom ? 'Custom raster map' : 'Built-in raster map'; kind.classList.toggle('custom', custom || !!(source && source.type === 'mvt')); }
     if (attribution) attribution.textContent = source && source.attribution ? source.attribution : '';
     if (edit) edit.disabled = !custom;
     if (remove) remove.disabled = !custom;
@@ -161,6 +180,7 @@
     const notice = document.getElementById('mapNotice');
     const health = layerHealth[activeSource];
     if (!notice || !health || health.errors === 0) { if (notice) notice.textContent = ''; return; }
+    if (health.message) { notice.textContent = ' · ' + health.message; return; }
     notice.textContent = ' · ' + health.errors + ' tile errors (network/source)';
   }
   function setStyle(feature, selectedFlag) {

@@ -311,12 +311,28 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution());
         JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains());
         JCheckBox tms = new JCheckBox("TMS Y axis (invert tile row)", initial != null && initial.tms());
+        JComboBox<MapSourceType> type = new JComboBox<>(MapSourceType.values());
+        JTextField vectorLayer = new JTextField(initial == null ? "sliced" : initial.vectorLayer());
+        if (initial != null) type.setSelectedItem(initial.type());
+        type.addActionListener(ignored -> {
+            boolean mvt = type.getSelectedItem() == MapSourceType.MVT;
+            vectorLayer.setEnabled(mvt);
+            tms.setEnabled(!mvt);
+            if (mvt) tms.setSelected(false);
+        });
         JPanel fields = new JPanel(new GridLayout(0, 1, 4, 4));
         fields.add(new JLabel("Name")); fields.add(name);
+        fields.add(new JLabel("Source type")); fields.add(type);
         fields.add(new JLabel("Tile URL template (XYZ/TMS)")); fields.add(url);
         fields.add(new JLabel("Attribution")); fields.add(attribution);
         fields.add(new JLabel("Subdomains for {s} (e.g. abc or 1234)")); fields.add(subdomains);
+        fields.add(new JLabel("MVT layer name (usually sliced; comma-separated for multiple layers)")); fields.add(vectorLayer);
         fields.add(tms);
+        type.setSelectedItem(initial == null ? MapSourceType.RASTER_XYZ : initial.type());
+        boolean initialMvt = type.getSelectedItem() == MapSourceType.MVT;
+        vectorLayer.setEnabled(initialMvt);
+        tms.setEnabled(!initialMvt);
+        if (initialMvt) tms.setSelected(false);
         String title = initial == null ? "Add Custom Map Source" : "Edit Custom Map Source";
         int result = JOptionPane.showConfirmDialog(grid.getMainResultViewComponent(), fields, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (result != JOptionPane.OK_OPTION) return null;
@@ -326,7 +342,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
             Messages.showWarningDialog(grid.getMainResultViewComponent(), "Name and tile URL template are required.", "Geo Viewer Plus");
             return null;
         }
-        return new MapSource(sourceName, template, attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim(), true);
+        MapSourceType sourceType = (MapSourceType) type.getSelectedItem();
+        return new MapSource(sourceName, template, attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim(), true, sourceType, vectorLayer.getText().trim());
     }
 
     private void loadPage() {
@@ -389,9 +406,11 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         if (stored.isBlank()) return result;
         for (String item : stored.split("\\n")) {
             String[] parts = item.split("\\|", -1);
-            if (parts.length != 4 && parts.length != 5) continue;
+            if (parts.length < 4 || parts.length > 7) continue;
             try {
-                result.add(new MapSource(decode(parts[0]), decode(parts[1]), decode(parts[2]), Boolean.parseBoolean(parts[3]), parts.length == 5 ? decode(parts[4]) : "", true));
+                MapSourceType type = parts.length >= 6 ? MapSourceType.fromId(decode(parts[5])) : MapSourceType.RASTER_XYZ;
+                String vectorLayer = parts.length >= 7 ? decode(parts[6]) : "";
+                result.add(new MapSource(decode(parts[0]), decode(parts[1]), decode(parts[2]), Boolean.parseBoolean(parts[3]), parts.length >= 5 ? decode(parts[4]) : "", true, type, vectorLayer));
             } catch (IllegalArgumentException ignored) {
             }
         }
@@ -407,7 +426,9 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                     .append(encode(source.template())).append('|')
                     .append(encode(source.attribution())).append('|')
                     .append(source.tms()).append('|')
-                    .append(encode(source.subdomains()));
+                    .append(encode(source.subdomains())).append('|')
+                    .append(encode(source.type().id())).append('|')
+                    .append(encode(source.vectorLayer()));
         }
         PropertiesComponent.getInstance().setValue(CUSTOM_SOURCES_KEY, value.toString());
     }
@@ -416,7 +437,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private static String decode(String value) { return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8); }
 
     private static String sourceJson(MapSource source) {
-        return "{\"name\":\"" + json(source.name()) + "\",\"template\":\"" + json(source.template()) + "\",\"attribution\":\"" + json(source.attribution()) + "\",\"tms\":" + source.tms() + ",\"subdomains\":\"" + json(source.subdomains()) + "\",\"custom\":" + source.custom() + "}";
+        return "{\"name\":\"" + json(source.name()) + "\",\"template\":\"" + json(source.template()) + "\",\"attribution\":\"" + json(source.attribution()) + "\",\"tms\":" + source.tms() + ",\"subdomains\":\"" + json(source.subdomains()) + "\",\"custom\":" + source.custom() + ",\"type\":\"" + json(source.type().id()) + "\",\"vectorLayer\":\"" + json(source.vectorLayer()) + "\"}";
     }
 
     private static String payload(GeoDataExtractor.Snapshot snapshot) {

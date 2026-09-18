@@ -14,19 +14,13 @@ dependencies {
     // The SDK exposes DataGrip's content modules as separate jars. They are provided
     // by DataGrip at runtime, so keep them compile-only for this plugin.
     compileOnly(fileTree("tools/datagrip-sdk/plugins/DatabaseTools/lib/modules") { include("*.jar") })
-    compileOnly(fileTree("tools/datagrip-sdk/plugins/grid-core-plugin/lib/modules") { include("*.jar") })
-    compileOnly(fileTree("tools/datagrip-sdk/plugins/jcef-plugin/lib/modules") { include("*.jar") })
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
-    }
+    compileOnly(fileTree("tools/datagrip-sdk/plugins/grid-plugin/lib/modules") { include("*.jar") })
+    compileOnly(fileTree("tools/datagrip-sdk/lib") { include("*.jar") })
 }
 
 intellij {
     localPath.set(rootProject.file("tools/datagrip-sdk").absolutePath)
-    plugins.set(listOf("DatabaseTools", "intellij.grid.core.plugin", "com.intellij.modules.jcef"))
+    plugins.set(listOf("DatabaseTools", "intellij.grid.plugin"))
     instrumentCode.set(false)
 }
 
