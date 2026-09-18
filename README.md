@@ -39,6 +39,20 @@ The version is defined once in `gradle.properties` as `pluginVersion`. Local reb
 
 The first Marketplace upload must be done manually from `build/distributions/geo-viewer-plus-0.1.0.zip`. After the plugin page exists, later releases can use `publishPlugin` with the `intellijPlatformPublishingToken` Gradle property supplied through an environment variable or CI secret.
 
+To publish a later patch release from the maintained Windows build environment, create a JetBrains Marketplace token and set it only in the local user environment:
+
+```powershell
+[Environment]::SetEnvironmentVariable("ORG_GRADLE_PROJECT_intellijPlatformPublishingToken", "YOUR_MARKETPLACE_TOKEN", "User")
+```
+
+Then open a new PowerShell session and run:
+
+```powershell
+.\scripts\publish-plugin.ps1 -Bump patch
+```
+
+Use `-Bump minor` for a backward-compatible feature group or `-Bump major` for a breaking release. The script checks for a clean worktree, increments `pluginVersion`, runs `publishPlugin`, commits the release, and pushes the Git tag. The token is never stored in the repository.
+
 After installing the updated ZIP, restart DataGrip (or use **File > Invalidate Caches / Restart** if the old action is still cached). The map icon is added to the main toolbar; it can also be found under **Tools > Open Geo Viewer Plus**. The viewer is placed below the current result panel.
 
 ## Next integration seam
