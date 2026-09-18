@@ -76,6 +76,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private final JBCefJSQuery readyQuery;
     private final JBCefJSQuery sourceQuery;
     private final JBCefJSQuery addSourceQuery;
+    private final JBCefJSQuery editSourceQuery;
+    private final JBCefJSQuery removeSourceQuery;
     private final JBCefJSQuery defaultSourceQuery;
     private final JPanel component;
     private final List<MapSource> sources = new ArrayList<>();
@@ -105,6 +107,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         this.readyQuery = JBCefJSQuery.create(browser);
         this.sourceQuery = JBCefJSQuery.create(browser);
         this.addSourceQuery = JBCefJSQuery.create(browser);
+        this.editSourceQuery = JBCefJSQuery.create(browser);
+        this.removeSourceQuery = JBCefJSQuery.create(browser);
         this.defaultSourceQuery = JBCefJSQuery.create(browser);
         this.component = new JBPanel<>(new BorderLayout());
         this.selectionTimer = new Timer(180, event -> syncGridSelection());
@@ -159,6 +163,14 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         });
         addSourceQuery.addHandler(ignored -> {
             SwingUtilities.invokeLater(() -> addMapSource(null));
+            return new JBCefJSQuery.Response("");
+        });
+        editSourceQuery.addHandler(sourceName -> {
+            SwingUtilities.invokeLater(() -> editMapSource(sourceName));
+            return new JBCefJSQuery.Response("");
+        });
+        removeSourceQuery.addHandler(sourceName -> {
+            SwingUtilities.invokeLater(() -> removeMapSource(sourceName));
             return new JBCefJSQuery.Response("");
         });
         defaultSourceQuery.addHandler(sourceName -> {
@@ -220,25 +232,101 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     private void addMapSource(ActionEvent event) {
-        JTextField name = new JTextField("My map");
-        JTextField url = new JTextField("https://{s}.example.com/{z}/{x}/{y}.png");
-        JTextField attribution = new JTextField("Map data contributors");
-        JTextField subdomains = new JTextField("abc");
-        JCheckBox tms = new JCheckBox("TMS Y axis (invert tile row)");
+        MapSource source = showMapSourceDialog(null);
+        if (source == null) return;
+        if (sources.stream().anyMatch(existing -> existing.name().equalsIgnoreCase(source.name()))) {
+            Messages.showWarningDialog(grid.getMainResultViewComponent(), "A map source with this name already exists.", "Geo Viewer Plus");
+            return;
+        }
+        sources.add(source);
+        selectedSourceName = source.name();
+        persistCustomSources();
+        browser.runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(source) + ", true);");
+    }
+
+    private void editMapSource(String sourceName) {
+        int index = findSourceIndex(sourceName);
+        if (index < 0 || !sources.get(index).custom()) return;
+        MapSource updated = showMapSourceDialog(sources.get(index));
+        if (updated == null) return;
+        if (sources.stream().anyMatch(existing -> existing != sources.get(index) && existing.name().equalsIgnoreCase(updated.name()))) {
+            Messages.showWarningDialog(grid.getMainResultViewComponent(), "A map source with this name already exists.", "Geo Viewer Plus");
+            return;
+        }
+        MapSource previous = sources.set(index, updated);
+        boolean wasSelected = previous.name().equals(selectedSourceName);
+        boolean wasDefault = previous.name().equals(defaultSourceName);
+        if (wasSelected) selectedSourceName = updated.name();
+        if (wasDefault) defaultSourceName = updated.name();
+        persistCustomSources();
+        if (wasDefault) PropertiesComponent.getInstance().setValue(DEFAULT_SOURCE_KEY, defaultSourceName);
+        browser.runJavaScript("window.geoPlus && window.geoPlus.removeSource(" + quote(previous.name()) + ");");
+        browser.runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(updated) + ", " + wasSelected + ");");
+        if (wasDefault) browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(defaultSourceName) + ");");
+    }
+
+    private void removeMapSource(String sourceName) {
+        int index = findSourceIndex(sourceName);
+        if (index < 0 || !sources.get(index).custom()) return;
+        MapSource source = sources.get(index);
+        int result = JOptionPane.showConfirmDialog(
+                grid.getMainResultViewComponent(),
+                "Remove custom map source ‘" + source.name() + "’?\nThis does not affect built-in sources.",
+                "Remove Custom Map Source",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (result != JOptionPane.OK_OPTION) return;
+
+        boolean wasSelected = source.name().equals(selectedSourceName);
+        boolean wasDefault = source.name().equals(defaultSourceName);
+        sources.remove(index);
+        persistCustomSources();
+        browser.runJavaScript("window.geoPlus && window.geoPlus.removeSource(" + quote(source.name()) + ");");
+        if (wasSelected) {
+            String fallback = sources.isEmpty() ? "" : sources.get(0).name();
+            selectedSourceName = fallback;
+            if (!fallback.isBlank()) {
+                browser.runJavaScript("window.geoPlus && window.geoPlus.switchSource(" + quote(fallback) + ");");
+            }
+        }
+        if (wasDefault) {
+            String fallback = sources.isEmpty() ? "" : sources.get(0).name();
+            defaultSourceName = fallback;
+            PropertiesComponent.getInstance().setValue(DEFAULT_SOURCE_KEY, fallback);
+            if (!fallback.isBlank()) browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(fallback) + ");");
+        }
+    }
+
+    private int findSourceIndex(String sourceName) {
+        for (int i = 0; i < sources.size(); i++) {
+            if (sources.get(i).name().equals(sourceName)) return i;
+        }
+        return -1;
+    }
+
+    private MapSource showMapSourceDialog(MapSource initial) {
+        JTextField name = new JTextField(initial == null ? "My map" : initial.name());
+        JTextField url = new JTextField(initial == null ? "https://{s}.example.com/{z}/{x}/{y}.png" : initial.template());
+        JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution());
+        JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains());
+        JCheckBox tms = new JCheckBox("TMS Y axis (invert tile row)", initial != null && initial.tms());
         JPanel fields = new JPanel(new GridLayout(0, 1, 4, 4));
         fields.add(new JLabel("Name")); fields.add(name);
         fields.add(new JLabel("Tile URL template (XYZ/TMS)")); fields.add(url);
         fields.add(new JLabel("Attribution")); fields.add(attribution);
         fields.add(new JLabel("Subdomains for {s} (e.g. abc or 1234)")); fields.add(subdomains);
         fields.add(tms);
-        int result = JOptionPane.showConfirmDialog(grid.getMainResultViewComponent(), fields, "Add Custom Map Source", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (result != JOptionPane.OK_OPTION) return;
-        MapSource source = new MapSource(name.getText().trim(), url.getText().trim(), attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim());
-        if (source.name().isBlank() || source.template().isBlank()) return;
-        sources.add(source);
-        selectedSourceName = source.name();
-        persistCustomSources();
-        browser.runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(source) + ", true);");
+        String title = initial == null ? "Add Custom Map Source" : "Edit Custom Map Source";
+        int result = JOptionPane.showConfirmDialog(grid.getMainResultViewComponent(), fields, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) return null;
+        String sourceName = name.getText().trim();
+        String template = url.getText().trim();
+        if (sourceName.isBlank() || template.isBlank()) {
+            Messages.showWarningDialog(grid.getMainResultViewComponent(), "Name and tile URL template are required.", "Geo Viewer Plus");
+            return null;
+        }
+        return new MapSource(sourceName, template, attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim(), true);
     }
 
     private void loadPage() {
@@ -247,8 +335,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         String ready = readyQuery.inject("ready");
         String source = sourceQuery.inject("String(name)");
         String addSource = addSourceQuery.inject("open");
+        String editSource = editSourceQuery.inject("String(name)");
+        String removeSource = removeSourceQuery.inject("String(name)");
         String defaultSource = defaultSourceQuery.inject("String(name)");
-        String bootstrap = "<script>window.dg=window.dg||{};window.dg.selectInTable=function(row){" + query + "};window.dg.changeSource=function(name){" + source + "};window.dg.addMapSource=function(){" + addSource + "};window.dg.setDefaultSource=function(name){" + defaultSource + "};</script>";
+        String bootstrap = "<script>window.dg=window.dg||{};window.dg.selectInTable=function(row){" + query + "};window.dg.changeSource=function(name){" + source + "};window.dg.addMapSource=function(){" + addSource + "};window.dg.editMapSource=function(name){" + editSource + "};window.dg.removeMapSource=function(name){" + removeSource + "};window.dg.setDefaultSource=function(name){" + defaultSource + "};</script>";
         html = html.replace("__GEO_VIEWER_READY__", ready);
         browser.loadHTML(html.replace("</body>", bootstrap + "</body>"), "https://geo-viewer-plus.local/");
     }
@@ -301,7 +391,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
             String[] parts = item.split("\\|", -1);
             if (parts.length != 4 && parts.length != 5) continue;
             try {
-                result.add(new MapSource(decode(parts[0]), decode(parts[1]), decode(parts[2]), Boolean.parseBoolean(parts[3]), parts.length == 5 ? decode(parts[4]) : ""));
+                result.add(new MapSource(decode(parts[0]), decode(parts[1]), decode(parts[2]), Boolean.parseBoolean(parts[3]), parts.length == 5 ? decode(parts[4]) : "", true));
             } catch (IllegalArgumentException ignored) {
             }
         }
@@ -309,11 +399,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     private void persistCustomSources() {
-        int firstCustom = defaultSources().size();
         StringBuilder value = new StringBuilder();
-        for (int i = firstCustom; i < sources.size(); i++) {
+        for (MapSource source : sources) {
+            if (!source.custom()) continue;
             if (value.length() > 0) value.append('\n');
-            MapSource source = sources.get(i);
             value.append(encode(source.name())).append('|')
                     .append(encode(source.template())).append('|')
                     .append(encode(source.attribution())).append('|')
@@ -327,7 +416,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private static String decode(String value) { return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8); }
 
     private static String sourceJson(MapSource source) {
-        return "{\"name\":\"" + json(source.name()) + "\",\"template\":\"" + json(source.template()) + "\",\"attribution\":\"" + json(source.attribution()) + "\",\"tms\":" + source.tms() + ",\"subdomains\":\"" + json(source.subdomains()) + "\"}";
+        return "{\"name\":\"" + json(source.name()) + "\",\"template\":\"" + json(source.template()) + "\",\"attribution\":\"" + json(source.attribution()) + "\",\"tms\":" + source.tms() + ",\"subdomains\":\"" + json(source.subdomains()) + "\",\"custom\":" + source.custom() + "}";
     }
 
     private static String payload(GeoDataExtractor.Snapshot snapshot) {
@@ -367,6 +456,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         readyQuery.dispose();
         sourceQuery.dispose();
         addSourceQuery.dispose();
+        editSourceQuery.dispose();
+        removeSourceQuery.dispose();
         defaultSourceQuery.dispose();
         browser.dispose();
     }
