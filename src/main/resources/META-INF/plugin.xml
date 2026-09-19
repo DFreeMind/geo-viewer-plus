@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin require-restart="false">
     <id>cn.duqimeng.geo-viewer-plus</id>
     <name>Geo Viewer Plus</name>
     <vendor email="support@geoviewer.plus" url="https://www.openstreetmap.org/">Geo Viewer Plus</vendor>

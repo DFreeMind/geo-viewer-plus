@@ -59,7 +59,7 @@ Keep Marketplace screenshots in `docs/media/<version>/`. The Marketplace Media s
 
 Use `-Bump minor` for a backward-compatible feature group or `-Bump major` for a breaking release. The script checks for a clean worktree, increments `pluginVersion`, runs `publishPlugin`, commits the release, and pushes the Git tag. The token is never stored in the repository.
 
-After installing the updated ZIP, restart DataGrip (or use **File > Invalidate Caches / Restart** if the old action is still cached). The map icon is added to the main toolbar; it can also be found under **Tools > Open Geo Viewer Plus**. The viewer is placed below the current result panel.
+Install the ZIP from **Settings | Plugins | ⚙ | Install Plugin from Disk…**. Geo Viewer Plus declares dynamic-plugin support, so DataGrip can normally enable or update it immediately without restarting. If an older viewer is open or the IDE reports that unloading failed, close its Geo Viewer Plus tab and retry; restart only when DataGrip explicitly requests it. The map icon is added to the main toolbar and **Tools | Open Geo Viewer Plus**.
 
 ## Next integration seam
 
