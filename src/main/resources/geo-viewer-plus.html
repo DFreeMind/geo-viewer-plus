@@ -124,6 +124,34 @@
     .toolbar-link-title { color:#c9f7df; font-size:10px; font-weight:700; }
     .toolbar-link-subtitle { margin-top:2px; overflow:hidden; color:#7fa993; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
     .floating-toolbar-note { margin:0 2px 1px; color:#7288a3; font-size:10px; line-height:1.55; }
+    /* The map is already inside a tool window: keep its controls deliberately compact. */
+    .floating-toolbar { top:10px; right:10px; width:min(258px, calc(100vw - 20px)); border-radius:13px; }
+    .floating-toolbar::before, .toolbar-brand-kicker, .toolbar-live, .floating-toolbar-head, .toolbar-link-status, .toolbar-section-label, .toolbar-source-meta, .floating-toolbar-note { display:none; }
+    .toolbar-topbar { min-height:46px; padding:7px 8px 7px 10px; border-bottom-color:rgba(148,163,184,.12); }
+    .toolbar-brand { gap:7px; }
+    .toolbar-brand-mark { width:25px; height:25px; border-radius:7px; }
+    .toolbar-brand-mark svg { width:14px; height:14px; }
+    .toolbar-brand-title { font-size:11px; }
+    .toolbar-toggle { width:28px; height:28px; border-radius:8px; }
+    .collapsed .toolbar-toggle { width:42px; height:42px; border-radius:11px; }
+    .floating-toolbar.collapsed { width:42px; }
+    .toolbar-panel { padding:8px; }
+    .toolbar-group, .toolbar-group.source-group { margin:0; padding:0; border:0; border-radius:0; background:transparent; }
+    .source-picker { margin:0 0 7px; }
+    .source-picker-button { min-height:36px; padding:0 9px; border-radius:8px; }
+    .source-picker-leading { width:20px; height:20px; margin-right:7px; border-radius:6px; }
+    .source-picker-leading svg { width:12px; height:12px; }
+    .source-picker-value { font-size:11px; }
+    .source-menu { max-height:min(300px, calc(100vh - 110px)); padding:6px; border-radius:10px; }
+    .source-menu-head { margin:0 2px 5px; }
+    .source-search { min-height:29px; margin-bottom:4px; padding:0 7px; }
+    .source-menu-option { min-height:30px; font-size:11px; }
+    .toolbar-actions, .toolbar-manage-actions { grid-template-columns:repeat(3, 1fr); gap:5px; }
+    .toolbar-manage-actions { margin-top:5px; }
+    .toolbar-actions button, .toolbar-manage-actions button { min-height:29px; padding:0 5px; border-radius:7px; font-size:10px; }
+    .toolbar-actions .toolbar-default-button { grid-column:auto; }
+    .leaflet-control-attribution { padding:2px 5px!important; border-radius:5px 0 0 0!important; background:rgba(9,18,33,.86)!important; color:#a9bad0!important; font-size:10px!important; }
+    .leaflet-control-attribution a { color:#9bc5ff!important; }
     @media (max-width:560px) { .floating-toolbar { top:10px; right:10px; width:min(366px, calc(100vw - 20px)); } .map-status { left:10px; bottom:10px; } .floating-toolbar-title { font-size:16px; } }
     @media (prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; animation-iteration-count:1!important; } }
   </style>
@@ -139,9 +167,8 @@
   <div class="toolbar-panel" id="toolbarPanel">
     <div class="floating-toolbar-head"><div><div class="floating-toolbar-title">Map controls</div><div class="floating-toolbar-subtitle">Choose a visual layer and keep it in sync with the result grid.</div></div><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
     <div class="toolbar-link-status"><span class="toolbar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.2-1.2"/></svg></span><span class="toolbar-link-copy"><span class="toolbar-link-title">Map and result grid linked</span><span class="toolbar-link-subtitle">Select a row or feature to focus the other view.</span></span></div>
-    <div class="toolbar-group source-group"><span class="toolbar-section-label">Active layer</span><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="source-picker-leading" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><span id="sourcePickerValue" class="source-picker-value">Choose a map</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox" aria-label="Map sources"><div class="source-menu-head"><span>Map sources</span><span id="sourceMenuCount" class="source-menu-count"></span></div><label class="source-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><input id="sourceSearch" type="search" autocomplete="off" placeholder="Filter map layers" aria-label="Filter map layers"></label><div id="sourceMenuList" class="source-menu-list"></div></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div><div class="toolbar-source-meta"><span id="sourceKind" class="toolbar-source-kind">Built-in map</span><span id="sourceAttribution"></span></div></div>
-    <div class="toolbar-group"><span class="toolbar-section-label manage-label">Manage layers</span><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></span>Set as default</button><button id="addSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Add custom</button></div><div class="toolbar-manage-actions"><button id="refreshDataButton" type="button">Refresh result data</button><button id="editSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11.8-11.8a2.8 2.8 0 0 0-4-4L4 16Z"/><path d="m14.5 5.5 4 4"/></svg></span>Edit custom</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 14h8l1-14"/></svg></span>Remove</button></div></div>
-    <div class="floating-toolbar-note">Built-in maps are protected. Custom layers can be edited or removed. Attribution stays visible for the active source.</div>
+    <div class="toolbar-group source-group"><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose map source"><span class="source-picker-leading" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><span id="sourcePickerValue" class="source-picker-value">Choose a map</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox" aria-label="Map sources"><div class="source-menu-head"><span>Map sources</span><span id="sourceMenuCount" class="source-menu-count"></span></div><label class="source-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><input id="sourceSearch" type="search" autocomplete="off" placeholder="Filter map layers" aria-label="Filter map layers"></label><div id="sourceMenuList" class="source-menu-list"></div></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div></div>
+    <div class="toolbar-group"><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button" title="Set as default">Default</button><button id="addSourceButton" type="button" title="Add custom map">+ Map</button><button id="refreshDataButton" type="button" title="Refresh result data">Refresh</button></div><div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled title="Edit selected custom map">Edit</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled title="Remove selected custom map">Remove</button></div></div>
   </div>
 </div>
 <script>__LEAFLET_JS__</script>
