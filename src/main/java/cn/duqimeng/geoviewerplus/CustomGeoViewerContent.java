@@ -1,7 +1,6 @@
 package cn.duqimeng.geoviewerplus;
 
 import com.intellij.database.console.JdbcConsole;
-import com.intellij.database.console.client.DatabaseSessionClientWithFile;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.DataGridSessionClient;
 import com.intellij.database.datagrid.DataGridUtil;
@@ -14,10 +13,8 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBColor;
@@ -39,7 +36,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -50,7 +46,6 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -58,6 +53,7 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -83,9 +79,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private final JBCefJSQuery editSourceQuery;
     private final JBCefJSQuery removeSourceQuery;
     private final JBCefJSQuery defaultSourceQuery;
+    private final JBCefJSQuery reloadQuery;
     private final JPanel component;
     private final List<MapSource> sources = new ArrayList<>();
-    private final String payload;
+    private String payload;
     private final Timer selectionTimer;
     private boolean pageReady;
     private String lastSelectionKey = "";
@@ -114,6 +111,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         this.editSourceQuery = JBCefJSQuery.create(browser);
         this.removeSourceQuery = JBCefJSQuery.create(browser);
         this.defaultSourceQuery = JBCefJSQuery.create(browser);
+        this.reloadQuery = JBCefJSQuery.create(browser);
         this.component = new JBPanel<>(new BorderLayout());
         this.selectionTimer = new Timer(180, event -> syncGridSelection());
 
@@ -185,6 +183,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                     browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(sourceName) + ");");
                 }
             });
+            return new JBCefJSQuery.Response("");
+        });
+        reloadQuery.addHandler(ignored -> {
+            SwingUtilities.invokeLater(this::reload);
             return new JBCefJSQuery.Response("");
         });
         component.setBorder(BorderFactory.createLineBorder(BORDER));
@@ -370,6 +372,11 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                 JOptionPane.showMessageDialog(dialog, "Name and tile URL template are required.", "Geo Viewer Plus", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            String validation = validateTileTemplate(template);
+            if (validation != null) {
+                JOptionPane.showMessageDialog(dialog, validation, "Geo Viewer Plus", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             MapSourceType sourceType = (MapSourceType) type.getSelectedItem();
             result[0] = new MapSource(sourceName, template, attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim(), true, sourceType, vectorLayer.getText().trim());
             dialog.dispose();
@@ -412,6 +419,9 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private void loadPage() {
         String html = readResource(HTML_RESOURCE);
+        html = html.replace("__LEAFLET_CSS__", readResource("/leaflet.css"))
+                .replace("__LEAFLET_JS__", readResource("/leaflet.js"))
+                .replace("__LEAFLET_VECTORGRID_JS__", readResource("/leaflet-vectorgrid.js"));
         String query = selectQuery.inject("String(row)");
         String ready = readyQuery.inject("ready");
         String source = sourceQuery.inject("String(name)");
@@ -419,7 +429,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         String editSource = editSourceQuery.inject("String(name)");
         String removeSource = removeSourceQuery.inject("String(name)");
         String defaultSource = defaultSourceQuery.inject("String(name)");
-        String bootstrap = "<script>window.dg=window.dg||{};window.dg.selectInTable=function(row){" + query + "};window.dg.changeSource=function(name){" + source + "};window.dg.addMapSource=function(){" + addSource + "};window.dg.editMapSource=function(name){" + editSource + "};window.dg.removeMapSource=function(name){" + removeSource + "};window.dg.setDefaultSource=function(name){" + defaultSource + "};</script>";
+        String reload = reloadQuery.inject("refresh");
+        String bootstrap = "<script>window.dg=window.dg||{};window.dg.selectInTable=function(row){" + query + "};window.dg.changeSource=function(name){" + source + "};window.dg.addMapSource=function(){" + addSource + "};window.dg.editMapSource=function(name){" + editSource + "};window.dg.removeMapSource=function(name){" + removeSource + "};window.dg.setDefaultSource=function(name){" + defaultSource + "};window.dg.refreshMap=function(){" + reload + "};</script>";
         html = html.replace("__GEO_VIEWER_READY__", ready);
         browser.loadHTML(html.replace("</body>", bootstrap + "</body>"), "https://geo-viewer-plus.local/");
     }
@@ -435,6 +446,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private void reload() {
         lastSelectionKey = "";
+        payload = payload(GeoDataExtractor.extract(grid, 500));
         browser.runJavaScript("window.geoPlus && window.geoPlus.loadFeatures(" + payload + ");");
     }
 
@@ -451,17 +463,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private static List<MapSource> defaultSources() {
         return List.of(
-                new MapSource("高德道路（国内）", "https://wprd0{s}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8&ltype=11", "© 高德地图 · GCJ-02", false, "1234"),
-                new MapSource("高德道路（简洁）", "https://wprd0{s}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8", "© 高德地图 · GCJ-02", false, "1234"),
-                new MapSource("高德道路（轻量）", "https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}", "© 高德地图 · GCJ-02", false, "1234"),
-                new MapSource("高德影像（国内）", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}", "© 高德地图 · 影像 · GCJ-02", false, "1234"),
-                new MapSource("高德影像（含路网）", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&ltype=11&x={x}&y={y}&z={z}", "© 高德地图 · 影像/路网 · GCJ-02", false, "1234"),
                 new MapSource("OSM Standard", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors", false),
                 new MapSource("OSM Humanitarian", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "© OpenStreetMap contributors · HOT", false, "abc"),
                 new MapSource("OpenTopoMap", "https://tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors · SRTM", false),
-                new MapSource("Esri World Imagery", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "© Esri", false),
-                new MapSource("腾讯道路（标准·实验）", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&version=376", "© 腾讯地图 · 坐标系请按数据源校正", false, "0123"),
-                new MapSource("腾讯道路（简洁·实验）", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=2&version=376", "© 腾讯地图 · 坐标系请按数据源校正", false, "0123")
+                new MapSource("Esri World Imagery", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "© Esri", false)
         );
     }
 
@@ -475,7 +480,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
             try {
                 MapSourceType type = parts.length >= 6 ? MapSourceType.fromId(decode(parts[5])) : MapSourceType.RASTER_XYZ;
                 String vectorLayer = parts.length >= 7 ? decode(parts[6]) : "";
-                result.add(new MapSource(decode(parts[0]), decode(parts[1]), decode(parts[2]), Boolean.parseBoolean(parts[3]), parts.length >= 5 ? decode(parts[4]) : "", true, type, vectorLayer));
+                String template = decode(parts[1]);
+                if (validateTileTemplate(template) == null) {
+                    result.add(new MapSource(decode(parts[0]), template, decode(parts[2]), Boolean.parseBoolean(parts[3]), parts.length >= 5 ? decode(parts[4]) : "", true, type, vectorLayer));
+                }
             } catch (IllegalArgumentException ignored) {
             }
         }
@@ -506,7 +514,11 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     private static String payload(GeoDataExtractor.Snapshot snapshot) {
-        StringBuilder out = new StringBuilder("{\"geometryColumn\":").append(quote(snapshot.geometryColumn())).append(",\"features\":[");
+        StringBuilder out = new StringBuilder("{\"geometryColumn\":").append(quote(snapshot.geometryColumn()))
+                .append(",\"visibleRows\":").append(snapshot.visibleRows())
+                .append(",\"truncatedRows\":").append(snapshot.truncatedRows())
+                .append(",\"skippedRows\":").append(snapshot.skippedRows())
+                .append(",\"features\":[");
         for (int i = 0; i < snapshot.features().size(); i++) {
             if (i > 0) out.append(',');
             GeoDataExtractor.Feature f = snapshot.features().get(i);
@@ -532,7 +544,38 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private static String quote(String value) { return "\"" + json(value) + "\""; }
     private static String json(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t");
+        StringBuilder escaped = new StringBuilder(value.length() + 16);
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '\\' -> escaped.append("\\\\");
+                case '"' -> escaped.append("\\\"");
+                case '\b' -> escaped.append("\\b");
+                case '\f' -> escaped.append("\\f");
+                case '\n' -> escaped.append("\\n");
+                case '\r' -> escaped.append("\\r");
+                case '\t' -> escaped.append("\\t");
+                default -> {
+                    if (c < 0x20 || c == 0x2028 || c == 0x2029) escaped.append(String.format("\\u%04x", (int) c));
+                    else escaped.append(c);
+                }
+            }
+        }
+        return escaped.toString();
+    }
+
+    private static String validateTileTemplate(String template) {
+        if (!template.contains("{z}") || !template.contains("{x}") || !template.contains("{y}")) {
+            return "Tile URL template must contain {z}, {x}, and {y}.";
+        }
+        try {
+            String probe = template.replace("{s}", "a").replace("{z}", "0").replace("{x}", "0").replace("{y}", "0");
+            String scheme = URI.create(probe).getScheme();
+            if (!"https".equalsIgnoreCase(scheme)) return "Only HTTPS tile sources are allowed to protect result-set location privacy.";
+        } catch (IllegalArgumentException ex) {
+            return "Tile URL template is not a valid HTTPS URL.";
+        }
+        return null;
     }
 
     @Override public void dispose() {
@@ -545,6 +588,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         editSourceQuery.dispose();
         removeSourceQuery.dispose();
         defaultSourceQuery.dispose();
+        reloadQuery.dispose();
         browser.dispose();
     }
 }

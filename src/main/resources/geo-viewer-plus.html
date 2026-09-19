@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="color-scheme" content="dark light">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>__LEAFLET_CSS__</style>
   <style>
     :root { --panel-bg:#0b1424; --panel-surface:#111e32; --panel-raised:#172943; --panel-line:rgba(148,163,184,.2); --panel-muted:#7f91aa; --panel-text:#e7eefb; --panel-blue:#7db7ff; --panel-blue-strong:#3b82f6; --panel-green:#58d6a0; --panel-red:#ff9aa8; }
     * { box-sizing:border-box; }
@@ -130,7 +130,7 @@
 </head>
 <body>
 <div id="map"></div>
-<div class="map-status"><span class="status-dot"></span><span class="status-copy"><strong id="count">0</strong><span>features</span></span><span class="status-divider" aria-hidden="true"></span><span id="geometry">waiting for result set</span><span class="status-divider" aria-hidden="true"></span><span id="zoom" class="zoom-level">Z=5</span><span id="mapNotice" class="map-notice"></span><button id="retrySourceButton" class="map-retry-button" type="button">Retry</button></div>
+<div class="map-status"><span class="status-dot"></span><span class="status-copy"><strong id="count">0</strong><span>features</span></span><span class="status-divider" aria-hidden="true"></span><span id="geometry">waiting for result set</span><span class="status-divider" aria-hidden="true"></span><span id="zoom" class="zoom-level">Z=5</span><span id="dataNotice" class="map-notice"></span><span id="mapNotice" class="map-notice"></span><button id="retrySourceButton" class="map-retry-button" type="button">Retry</button></div>
 <div class="floating-toolbar collapsed" id="floatingToolbar">
   <div class="toolbar-topbar">
     <div class="toolbar-brand"><span class="toolbar-brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 7 4v8l-7 6-7-6V7l7-4Z"/><path d="m5 7 7 4 7-4M12 11v10"/></svg></span><span class="toolbar-brand-copy"><span class="toolbar-brand-kicker">GEO VIEWER PLUS</span><span class="toolbar-brand-title">Map workspace</span></span></div>
@@ -140,12 +140,12 @@
     <div class="floating-toolbar-head"><div><div class="floating-toolbar-title">Map controls</div><div class="floating-toolbar-subtitle">Choose a visual layer and keep it in sync with the result grid.</div></div><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
     <div class="toolbar-link-status"><span class="toolbar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.2-1.2"/></svg></span><span class="toolbar-link-copy"><span class="toolbar-link-title">Map and result grid linked</span><span class="toolbar-link-subtitle">Select a row or feature to focus the other view.</span></span></div>
     <div class="toolbar-group source-group"><span class="toolbar-section-label">Active layer</span><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="source-picker-leading" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><span id="sourcePickerValue" class="source-picker-value">Choose a map</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox" aria-label="Map sources"><div class="source-menu-head"><span>Map sources</span><span id="sourceMenuCount" class="source-menu-count"></span></div><label class="source-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><input id="sourceSearch" type="search" autocomplete="off" placeholder="Filter map layers" aria-label="Filter map layers"></label><div id="sourceMenuList" class="source-menu-list"></div></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div><div class="toolbar-source-meta"><span id="sourceKind" class="toolbar-source-kind">Built-in map</span><span id="sourceAttribution"></span></div></div>
-    <div class="toolbar-group"><span class="toolbar-section-label manage-label">Manage layers</span><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></span>Set as default</button><button id="addSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Add custom</button></div><div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11.8-11.8a2.8 2.8 0 0 0-4-4L4 16Z"/><path d="m14.5 5.5 4 4"/></svg></span>Edit custom</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 14h8l1-14"/></svg></span>Remove</button></div></div>
+    <div class="toolbar-group"><span class="toolbar-section-label manage-label">Manage layers</span><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></span>Set as default</button><button id="addSourceButton" type="button"><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Add custom</button></div><div class="toolbar-manage-actions"><button id="refreshDataButton" type="button">Refresh result data</button><button id="editSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11.8-11.8a2.8 2.8 0 0 0-4-4L4 16Z"/><path d="m14.5 5.5 4 4"/></svg></span>Edit custom</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled><span class="toolbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 14h8l1-14"/></svg></span>Remove</button></div></div>
     <div class="floating-toolbar-note">Built-in maps are protected. Custom layers can be edited or removed. Attribution stays visible for the active source.</div>
   </div>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
+<script>__LEAFLET_JS__</script>
+<script>__LEAFLET_VECTORGRID_JS__</script>
 <script>
   const map = L.map('map', { zoomControl:true, preferCanvas:true }).setView([43.79,87.62], 5);
   const layers = {};
@@ -464,6 +464,13 @@
     clearFeatures(); const bounds=[]; const items=payload.features || [];
     items.forEach(item => { addWkt(item.wkt, item.row, item.attributes); const f=features.get(item.row); if(f && f.getBounds) bounds.push(f.getBounds()); else if(f && f.getLatLng) bounds.push(L.latLngBounds([f.getLatLng(),f.getLatLng()])); });
     document.getElementById('count').textContent = features.size; document.getElementById('geometry').textContent = payload.geometryColumn || 'geometry';
+    const dataNotice = document.getElementById('dataNotice');
+    if (dataNotice) {
+      const notices=[];
+      if (payload.truncatedRows) notices.push('showing first '+(payload.visibleRows-payload.truncatedRows)+' of '+payload.visibleRows+' rows');
+      if (payload.skippedRows) notices.push(payload.skippedRows+' unsupported/empty rows skipped');
+      dataNotice.textContent=notices.length ? ' · '+notices.join('; ') : '';
+    }
     const toolbarGeometry = document.getElementById('toolbarGeometry'); if (toolbarGeometry) toolbarGeometry.textContent = payload.geometryColumn || 'geometry';
     if(bounds.length) { const group=L.featureGroup(bounds.map(b=>L.rectangle(b,{opacity:0,fillOpacity:0}))); map.fitBounds(group.getBounds().pad(.12), { animate:false }); }
   }
@@ -506,6 +513,8 @@
   });
   const retrySourceButton = document.getElementById('retrySourceButton');
   if (retrySourceButton) retrySourceButton.addEventListener('click', retryActiveSource);
+  const refreshDataButton = document.getElementById('refreshDataButton');
+  if (refreshDataButton) refreshDataButton.addEventListener('click', () => { if (window.dg && window.dg.refreshMap) window.dg.refreshMap(); });
   const floatingToolbar = document.getElementById('floatingToolbar');
   const toolbarToggle = document.getElementById('toolbarToggle');
   if (floatingToolbar && toolbarToggle) {

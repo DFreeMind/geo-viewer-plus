@@ -3,7 +3,7 @@
     <name>Geo Viewer Plus</name>
     <vendor email="support@geoviewer.plus" url="https://www.openstreetmap.org/">Geo Viewer Plus</vendor>
     <description><![CDATA[
-        A focused Geo Viewer panel for database result sets: map points, lines and polygons with free basemap switching and Z-axis scaling.
+        A focused Geo Viewer panel for database result sets: inspect points, lines and polygons with WGS84-safe basemap switching, row selection sync, and custom HTTPS tile sources.
     ]]></description>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.database</depends>
