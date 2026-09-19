@@ -86,6 +86,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private final Timer selectionTimer;
     private boolean pageReady;
     private String lastSelectionKey = "";
+    private String lastVisibleRowsKey = "";
     private String selectedSourceName = "";
     private String defaultSourceName = "";
 
@@ -113,7 +114,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         this.defaultSourceQuery = JBCefJSQuery.create(browser);
         this.reloadQuery = JBCefJSQuery.create(browser);
         this.component = new JBPanel<>(new BorderLayout());
-        this.selectionTimer = new Timer(180, event -> syncGridSelection());
+        this.selectionTimer = new Timer(180, event -> syncGridState());
+        this.lastVisibleRowsKey = visibleRowsKey();
 
         sources.addAll(defaultSources());
         sources.addAll(loadCustomSources());
@@ -131,8 +133,11 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                 int row = Integer.parseInt(rowText);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     if (grid.isReady()) {
-                        grid.getSelectionModel().clearSelection();
                         ModelIndex<GridRow> modelRow = ModelIndex.forRow(grid, row);
+                        // The map must follow the currently displayed page. Do not let a stale
+                        // feature select a row that makes DataGrip navigate to another page.
+                        if (!isVisibleRow(row)) return;
+                        grid.getSelectionModel().clearSelection();
                         ModelIndex<GridColumn> column = grid.getContextColumn();
                         if (column == null && !grid.getVisibleColumns().asList().isEmpty()) {
                             column = grid.getVisibleColumns().asList().get(0);
@@ -447,11 +452,17 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private void reload() {
         lastSelectionKey = "";
         payload = payload(GeoDataExtractor.extract(grid, 500));
+        lastVisibleRowsKey = visibleRowsKey();
         browser.runJavaScript("window.geoPlus && window.geoPlus.loadFeatures(" + payload + ");");
     }
 
-    private void syncGridSelection() {
+    private void syncGridState() {
         if (!pageReady || !grid.isReady() || browser.isDisposed()) return;
+        String visibleRowsKey = visibleRowsKey();
+        if (!visibleRowsKey.equals(lastVisibleRowsKey)) {
+            lastVisibleRowsKey = visibleRowsKey;
+            reload();
+        }
         int[] rows = grid.getSelectionModel().getSelectedRows().asArray();
         String key = Arrays.toString(rows);
         if (key.equals(lastSelectionKey)) return;
@@ -459,6 +470,20 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         if (rows.length == 0) return;
         String rowArray = Arrays.stream(rows).mapToObj(String::valueOf).collect(java.util.stream.Collectors.joining(","));
         browser.runJavaScript("window.geoPlus && window.geoPlus.focusRows([" + rowArray + "], false);");
+    }
+
+    private boolean isVisibleRow(int row) {
+        return grid.getVisibleRows().asList().stream().anyMatch(visible -> visible.asInteger() == row);
+    }
+
+    private String visibleRowsKey() {
+        if (!grid.isReady()) return "";
+        StringBuilder key = new StringBuilder();
+        for (ModelIndex<GridRow> row : grid.getVisibleRows().asList()) {
+            if (key.length() > 0) key.append(',');
+            key.append(row.asInteger());
+        }
+        return key.toString();
     }
 
     private static List<MapSource> defaultSources() {
