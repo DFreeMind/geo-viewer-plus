@@ -9,7 +9,8 @@ Java package: `cn.duqimeng.geoviewerplus`
 
 - Uses DataGrip's live `DataGrid` context: clicking the action from a table editor or query result opens the current visible result set automatically.
 - Own JCEF + Leaflet renderer and own result-set-to-WKT extraction; it does not open or reuse DataGrip's Geo Viewer content.
-- Built-in basemap switcher with OSM Standard, OSM Humanitarian, OpenTopoMap, Esri World Imagery (when ArcGIS Online is reachable), plus verified AMap road/imagery and Tencent road sources. The domestic sources are explicitly marked GCJ-02 because WGS84 geometry data will be offset.
+- Built-in basemap switcher with OSM Standard, OSM Humanitarian, OpenTopoMap, OpenFreeMap's keyless open-source vector tiles (updated weekly), Esri World Imagery (when ArcGIS Online is reachable), plus AMap road/imagery and a Tencent compatibility source. Domestic sources are explicitly marked GCJ-02.
+- A display-only coordinate selector converts WGS84 result geometries to GCJ-02 for AMap/Tencent or BD-09 for Baidu. Conversion happens locally in the browser, is limited to mainland-China coordinates, and never writes to or changes the database value.
 - `+ Add map` accepts HTTPS XYZ/TMS and MVT tile templates, subdomains and attribution. HTTPS protects database-result location privacy when tiles are requested.
 - Bidirectional selection: selecting a grid row focuses and highlights its geometry; clicking a geometry selects and scrolls to the corresponding grid row.
 - **Refresh result data** re-reads the active grid after a query rerun, edit, filter, or sort.
