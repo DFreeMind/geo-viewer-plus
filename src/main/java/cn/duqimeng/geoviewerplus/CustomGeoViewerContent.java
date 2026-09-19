@@ -468,7 +468,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                 new MapSource("腾讯道路（GCJ-02，WGS84 数据会偏移）", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&version=376", "© 腾讯地图 · GCJ-02 · WGS84 data may be offset", false, "0123"),
                 new MapSource("OSM Standard", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors", false),
                 new MapSource("OSM Humanitarian", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "© OpenStreetMap contributors · HOT", false, "abc"),
-                new MapSource("OpenTopoMap", "https://tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors · SRTM", false)
+                new MapSource("OpenTopoMap", "https://tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors · SRTM", false),
+                new MapSource("Esri World Imagery（需可访问 ArcGIS Online）", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "© Esri", false)
         );
     }
 
