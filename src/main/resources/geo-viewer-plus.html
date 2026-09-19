@@ -152,6 +152,11 @@
     .toolbar-actions .toolbar-default-button { grid-column:auto; }
     .leaflet-control-attribution { padding:2px 5px!important; border-radius:5px 0 0 0!important; background:rgba(9,18,33,.86)!important; color:#a9bad0!important; font-size:10px!important; }
     .leaflet-control-attribution a { color:#9bc5ff!important; }
+    .source-warning { position:absolute; z-index:1000; right:0; bottom:27px; display:none; max-width:min(320px, calc(100vw - 24px)); padding:4px 7px; border:1px solid rgba(251,191,36,.38); border-radius:6px 0 0 6px; background:rgba(69,38,10,.9); color:#fde68a; font-size:10px; line-height:1.35; pointer-events:none; }
+    .source-warning.visible { display:block; }
+    .geo-point-marker { width:18px!important; height:18px!important; margin:-9px 0 0 -9px!important; border:2px solid #f8fbff; border-radius:50% 50% 50% 3px; background:radial-gradient(circle at 35% 30%, #d8ffec 0 14%, #51d49a 18% 46%, #177b57 50% 100%); box-shadow:0 3px 9px rgba(0,0,0,.48), 0 0 0 3px rgba(34,197,94,.18); transform:rotate(-45deg); transition:filter .16s ease, transform .16s ease, box-shadow .16s ease; }
+    .geo-point-marker::after { content:''; position:absolute; inset:4px; border:1px solid rgba(255,255,255,.72); border-radius:50%; }
+    .geo-point-marker.selected { background:radial-gradient(circle at 35% 30%, #fff0d6 0 14%, #ff9b57 18% 46%, #d94b16 50% 100%); box-shadow:0 4px 12px rgba(255,90,31,.5), 0 0 0 4px rgba(255,90,31,.2); filter:saturate(1.12); transform:rotate(-45deg) scale(1.24); }
     @media (max-width:560px) { .floating-toolbar { top:10px; right:10px; width:min(366px, calc(100vw - 20px)); } .map-status { left:10px; bottom:10px; } .floating-toolbar-title { font-size:16px; } }
     @media (prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; animation-iteration-count:1!important; } }
   </style>
@@ -159,6 +164,7 @@
 <body>
 <div id="map"></div>
 <div class="map-status"><span class="status-dot"></span><span class="status-copy"><strong id="count">0</strong><span>features</span></span><span class="status-divider" aria-hidden="true"></span><span id="geometry">waiting for result set</span><span class="status-divider" aria-hidden="true"></span><span id="zoom" class="zoom-level">Z=5</span><span id="dataNotice" class="map-notice"></span><span id="mapNotice" class="map-notice"></span><button id="retrySourceButton" class="map-retry-button" type="button">Retry</button></div>
+<div id="sourceWarning" class="source-warning" role="status"></div>
 <div class="floating-toolbar collapsed" id="floatingToolbar">
   <div class="toolbar-topbar">
     <div class="toolbar-brand"><span class="toolbar-brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 7 4v8l-7 6-7-6V7l7-4Z"/><path d="m5 7 7 4 7-4M12 11v10"/></svg></span><span class="toolbar-brand-copy"><span class="toolbar-brand-kicker">GEO VIEWER PLUS</span><span class="toolbar-brand-title">Map workspace</span></span></div>
@@ -377,13 +383,11 @@
   }
   function updateSourceMeta() {
     const source = sourceDefinitions.get(activeSource);
-    const kind = document.getElementById('sourceKind');
-    const attribution = document.getElementById('sourceAttribution');
+    const warning = document.getElementById('sourceWarning');
     const edit = document.getElementById('editSourceButton');
     const remove = document.getElementById('removeSourceButton');
     const custom = !!(source && source.custom);
-    if (kind) { kind.textContent = source && source.type === 'mvt' ? 'MVT vector source' : custom ? 'Custom raster map' : 'Built-in raster map'; kind.classList.toggle('custom', custom || !!(source && source.type === 'mvt')); }
-    if (attribution) attribution.textContent = source && source.attribution ? source.attribution : '';
+    if (warning) { const gcj02 = !!(source && String(source.attribution).includes('GCJ-02')); warning.textContent = gcj02 ? 'GCJ-02 底图：叠加 WGS84 几何可能出现位置偏移。' : ''; warning.classList.toggle('visible', gcj02); }
     if (edit) edit.disabled = !custom;
     if (remove) remove.disabled = !custom;
   }
@@ -414,7 +418,13 @@
   function setStyle(feature, selectedFlag) {
     if (feature.setStyle) feature.setStyle(selectedFlag ? selectedStyle : defaultStyle);
     else if (feature.eachLayer) feature.eachLayer(child => setStyle(child, selectedFlag));
-    if (feature.setIcon) feature.setOpacity(selectedFlag ? 1 : .78);
+    if (feature._geoPoint) { const element=feature.getElement && feature.getElement(); if (element) element.classList.toggle('selected', selectedFlag); feature.setOpacity(selectedFlag ? 1 : .82); }
+  }
+  function pointMarker(latlng) {
+    const icon=L.divIcon({ className:'geo-point-marker', iconSize:[18,18], iconAnchor:[9,9] });
+    const marker=L.marker(latlng, { icon, keyboard:true, riseOnHover:true });
+    marker._geoPoint=true;
+    return marker;
   }
   function parseCoordinate(text) {
     const values = text.trim().split(/\s+/).map(Number);
@@ -456,12 +466,12 @@
     if (/^empty$/i.test(body)) throw new Error('Empty geometry');
     const groups = parseWktGroups(body);
     let layer;
-    if (type === 'POINT') layer = L.circleMarker(groups[0], { radius:6, color:defaultStyle.color, weight:2, fillColor:defaultStyle.fillColor, fillOpacity:.75 });
+    if (type === 'POINT') layer = pointMarker(groups[0]);
     else if (type === 'LINESTRING') layer = L.polyline(groups, defaultStyle);
     else if (type === 'POLYGON') layer = L.polygon(groups, defaultStyle);
     else if (type === 'MULTILINESTRING') layer = L.featureGroup(groups.map(line => L.polyline(line, defaultStyle)));
     else if (type === 'MULTIPOLYGON') layer = L.featureGroup(groups.map(polygon => L.polygon(polygon, defaultStyle)));
-    else if (type === 'MULTIPOINT') layer = L.featureGroup(groups.map(point => L.circleMarker(point[0] || point, { radius:6, color:defaultStyle.color, weight:2, fillColor:defaultStyle.fillColor, fillOpacity:.75 })));
+    else if (type === 'MULTIPOINT') layer = L.featureGroup(groups.map(point => pointMarker(point[0] || point)));
     else throw new Error('Unsupported geometry type: ' + type);
     return layer;
   }

@@ -463,9 +463,9 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private static List<MapSource> defaultSources() {
         return List.of(
-                new MapSource("高德道路（GCJ-02，WGS84 数据会偏移）", "https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", "© 高德地图 · GCJ-02 · WGS84 data may be offset", false, "1234"),
-                new MapSource("高德影像（GCJ-02，WGS84 数据会偏移）", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}", "© 高德地图 · GCJ-02 · WGS84 data may be offset", false, "1234"),
-                new MapSource("腾讯道路（GCJ-02，WGS84 数据会偏移）", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&version=376", "© 腾讯地图 · GCJ-02 · WGS84 data may be offset", false, "0123"),
+                new MapSource("高德道路", "https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", "© 高德地图 · GCJ-02 · WGS84 data may be offset", false, "1234"),
+                new MapSource("高德影像", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}", "© 高德地图 · GCJ-02 · WGS84 data may be offset", false, "1234"),
+                new MapSource("腾讯道路", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&version=376", "© 腾讯地图 · GCJ-02 · WGS84 data may be offset", false, "0123"),
                 new MapSource("OSM Standard", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors", false),
                 new MapSource("OSM Humanitarian", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "© OpenStreetMap contributors · HOT", false, "abc"),
                 new MapSource("OpenTopoMap", "https://tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors · SRTM", false),
