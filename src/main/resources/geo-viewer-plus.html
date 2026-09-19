@@ -281,7 +281,12 @@
     });
     if (changed && layer.redraw) layer.redraw();
   }
-  function addSourcesFromJava(sources) { (sources || []).forEach(source => addSource(source)); updateSourceLabels(); }
+  const openFreeMapSource = { name:'OpenFreeMap 开源矢量（每周更新）', template:'https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf', attribution:'© OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors', tms:false, subdomains:'', custom:false, type:'mvt', vectorLayer:'water,waterway,landcover,landuse,park,building,transportation,boundary,place,poi' };
+  function normalizeBuiltinSource(source) {
+    if (source && source.name === '腾讯道路') return { ...source, name:'腾讯道路（兼容）', template:'https://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0&scene=0', tms:true, subdomains:'0123' };
+    return source;
+  }
+  function addSourcesFromJava(sources) { (sources || []).map(normalizeBuiltinSource).forEach(source => addSource(source)); addSource(openFreeMapSource); updateSourceLabels(); }
   function addSourceFromJava(source, selectIt) { addSource(source); if (selectIt) { const select = document.getElementById('sourceSelect'); if (select) select.value = source.name; switchSource(source.name); } if (window.dg && window.dg.sourcesChanged) window.dg.sourcesChanged(Object.keys(layers)); }
   function switchSource(name) { if (!sourceDefinitions.has(name)) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name] || null; activeSource = name; const select = document.getElementById('sourceSelect'); if (select) { select.value = name; updateSourcePickerValue(); renderSourceMenu(); } if (currentLayer) currentLayer.addTo(map); updateSourceMeta(); updateTileNotice(); }
   function removeSource(name) {
