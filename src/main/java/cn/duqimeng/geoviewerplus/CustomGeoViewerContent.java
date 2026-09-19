@@ -426,9 +426,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private void bootstrapPage() {
         if (!pageReady) return;
-        for (MapSource source : sources) {
-            browser.runJavaScript("window.geoPlus.addSource(" + sourceJson(source) + ");");
-        }
+        String sourceJson = sources.stream().map(CustomGeoViewerContent::sourceJson).collect(java.util.stream.Collectors.joining(","));
+        browser.runJavaScript("window.geoPlus && window.geoPlus.addSources([" + sourceJson + "]);" );
         if (!defaultSourceName.isBlank()) browser.runJavaScript("window.geoPlus.setDefaultSource(" + quote(defaultSourceName) + ");");
         if (!selectedSourceName.isBlank()) browser.runJavaScript("window.geoPlus.switchSource(" + quote(selectedSourceName) + ");");
         reload();

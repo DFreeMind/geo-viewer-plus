@@ -155,6 +155,7 @@
     return L.tileLayer(template(source.template), options);
   }
   function addSource(source) {
+    if (sourceDefinitions.has(source.name) && layers[source.name]) return;
     sourceDefinitions.set(source.name, source);
     let layer;
     try { layer = createSourceLayer(source); }
@@ -193,6 +194,7 @@
     });
     if (changed && layer.redraw) layer.redraw();
   }
+  function addSourcesFromJava(sources) { (sources || []).forEach(source => addSource(source)); updateSourceLabels(); }
   function addSourceFromJava(source, selectIt) { addSource(source); if (selectIt) { const select = document.getElementById('sourceSelect'); if (select) select.value = source.name; switchSource(source.name); } if (window.dg && window.dg.sourcesChanged) window.dg.sourcesChanged(Object.keys(layers)); }
   function switchSource(name) { if (!sourceDefinitions.has(name)) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name] || null; activeSource = name; const select = document.getElementById('sourceSelect'); if (select) { select.value = name; updateSourcePickerValue(); renderSourceMenu(); } if (currentLayer) currentLayer.addTo(map); updateSourceMeta(); updateTileNotice(); }
   function removeSource(name) {
@@ -400,7 +402,7 @@
     const toolbarGeometry = document.getElementById('toolbarGeometry'); if (toolbarGeometry) toolbarGeometry.textContent = payload.geometryColumn || 'geometry';
     if(bounds.length) { const group=L.featureGroup(bounds.map(b=>L.rectangle(b,{opacity:0,fillOpacity:0}))); map.fitBounds(group.getBounds().pad(.12), { animate:false }); }
   }
-  window.geoPlus = { addSource:addSourceFromJava, removeSource, switchSource, loadFeatures, focusRows, setDefaultSource };
+  window.geoPlus = { addSources:addSourcesFromJava, addSource:addSourceFromJava, removeSource, switchSource, loadFeatures, focusRows, setDefaultSource };
   function updateZoomLabel() {
     const zoom = document.getElementById('zoom');
     if (zoom) zoom.textContent = 'Z=' + map.getZoom();
