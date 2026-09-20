@@ -38,6 +38,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -53,7 +54,6 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -317,22 +317,22 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     private MapSource showMapSourceDialog(MapSource initial) {
-        JTextField name = new JTextField(initial == null ? "My map" : initial.name(), 42);
-        JTextField url = new JTextField(initial == null ? "https://{s}.example.com/{z}/{x}/{y}.png" : initial.template(), 42);
-        JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution(), 42);
-        JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains(), 42);
+        JTextField name = new JTextField(initial == null ? "My map" : initial.name(), 52);
+        JTextField url = new JTextField(initial == null ? "https://{s}.example.com/{z}/{x}/{y}.png" : initial.template(), 52);
+        JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution(), 52);
+        JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains(), 52);
         JCheckBox tms = new JCheckBox("TMS Y axis (invert tile row)", initial != null && initial.tms());
         JComboBox<MapSourceType> type = new JComboBox<>(MapSourceType.values());
-        JTextField vectorLayer = new JTextField(initial == null ? "sliced" : initial.vectorLayer(), 42);
+        JTextField vectorLayer = new JTextField(initial == null ? "sliced" : initial.vectorLayer(), 52);
         if (initial != null) type.setSelectedItem(initial.type());
         JBLabel vectorLayerLabel = new JBLabel("MVT layer names");
         JPanel fields = new JPanel(new GridBagLayout());
-        fields.setBorder(JBUI.Borders.empty(8, 12, 4, 12));
-        fields.setPreferredSize(new Dimension(620, 390));
+        fields.setBorder(JBUI.Borders.empty(12, 16, 8, 16));
+        fields.setPreferredSize(new Dimension(760, 0));
         int row = 0;
         row = addFormRow(fields, row, "Name", name, "Shown in the map source menu.");
         row = addFormRow(fields, row, "Source type", type, "Raster sources use XYZ/TMS tiles; MVT sources use protobuf vector tiles.");
-        row = addFormRow(fields, row, "Tile URL template", url, "Use {z}, {x}, {y}; add {s} when the server uses subdomains.");
+        row = addFormRow(fields, row, "Tile URL template", url, "Use {z}, {x}, {y}; add {s} when the server uses subdomains. The template is used as entered.");
         row = addFormRow(fields, row, "Attribution", attribution, "Keep the provider credit visible on the map.");
         row = addFormRow(fields, row, "Subdomains", subdomains, "For {s}, for example abc or 0123. Leave blank when unused.");
         row = addFormRow(fields, row, vectorLayerLabel, vectorLayer, "For MVT, enter names such as roads, water, landuse; comma-separate multiple names.");
@@ -357,8 +357,16 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         JDialog dialog = new JDialog(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         JPanel root = new JPanel(new BorderLayout(0, 8));
-        root.setBorder(JBUI.Borders.empty(8));
-        root.add(fields, BorderLayout.CENTER);
+        root.setBorder(JBUI.Borders.empty(10));
+        JBLabel privacyNote = new JBLabel("Tile requests are sent directly to this address. Use a source you are permitted to access.");
+        privacyNote.setForeground(JBColor.GRAY);
+        privacyNote.setBorder(JBUI.Borders.empty(0, 6, 4, 6));
+        root.add(privacyNote, BorderLayout.NORTH);
+        JBScrollPane formScrollPane = new JBScrollPane(fields);
+        formScrollPane.setBorder(JBUI.Borders.empty());
+        formScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        formScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        root.add(formScrollPane, BorderLayout.CENTER);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         JButton cancel = new JButton("Cancel");
@@ -387,9 +395,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
             dialog.dispose();
         });
         dialog.getRootPane().setDefaultButton(save);
-        dialog.setResizable(false);
+        dialog.setResizable(true);
         dialog.pack();
-        dialog.setMinimumSize(new Dimension(680, 500));
+        dialog.setMinimumSize(new Dimension(780, 560));
+        dialog.setSize(new Dimension(820, 620));
         dialog.setLocationRelativeTo(owner);
         dialog.setVisible(true);
         return result[0];
@@ -596,13 +605,6 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private static String validateTileTemplate(String template) {
         if (!template.contains("{z}") || !template.contains("{x}") || !template.contains("{y}")) {
             return "Tile URL template must contain {z}, {x}, and {y}.";
-        }
-        try {
-            String probe = template.replace("{s}", "a").replace("{z}", "0").replace("{x}", "0").replace("{y}", "0");
-            String scheme = URI.create(probe).getScheme();
-            if (!"https".equalsIgnoreCase(scheme)) return "Only HTTPS tile sources are allowed to protect result-set location privacy.";
-        } catch (IllegalArgumentException ex) {
-            return "Tile URL template is not a valid HTTPS URL.";
         }
         return null;
     }
