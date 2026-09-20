@@ -1,7 +1,6 @@
 package cn.duqimeng.geoviewerplus;
 
 import com.intellij.database.console.JdbcConsole;
-import com.intellij.database.console.client.DatabaseSessionClientWithFile;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.DataGridSessionClient;
 import com.intellij.database.datagrid.DataGridUtil;
@@ -14,10 +13,8 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBColor;
@@ -39,7 +36,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -48,12 +44,16 @@ import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.FlowLayout;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -76,13 +76,17 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private final JBCefJSQuery readyQuery;
     private final JBCefJSQuery sourceQuery;
     private final JBCefJSQuery addSourceQuery;
+    private final JBCefJSQuery editSourceQuery;
+    private final JBCefJSQuery removeSourceQuery;
     private final JBCefJSQuery defaultSourceQuery;
+    private final JBCefJSQuery reloadQuery;
     private final JPanel component;
     private final List<MapSource> sources = new ArrayList<>();
-    private final String payload;
+    private String payload;
     private final Timer selectionTimer;
     private boolean pageReady;
     private String lastSelectionKey = "";
+    private String lastVisibleRowsKey = "";
     private String selectedSourceName = "";
     private String defaultSourceName = "";
 
@@ -105,9 +109,13 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         this.readyQuery = JBCefJSQuery.create(browser);
         this.sourceQuery = JBCefJSQuery.create(browser);
         this.addSourceQuery = JBCefJSQuery.create(browser);
+        this.editSourceQuery = JBCefJSQuery.create(browser);
+        this.removeSourceQuery = JBCefJSQuery.create(browser);
         this.defaultSourceQuery = JBCefJSQuery.create(browser);
+        this.reloadQuery = JBCefJSQuery.create(browser);
         this.component = new JBPanel<>(new BorderLayout());
-        this.selectionTimer = new Timer(180, event -> syncGridSelection());
+        this.selectionTimer = new Timer(180, event -> syncGridState());
+        this.lastVisibleRowsKey = visibleRowsKey();
 
         sources.addAll(defaultSources());
         sources.addAll(loadCustomSources());
@@ -125,8 +133,11 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                 int row = Integer.parseInt(rowText);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     if (grid.isReady()) {
-                        grid.getSelectionModel().clearSelection();
                         ModelIndex<GridRow> modelRow = ModelIndex.forRow(grid, row);
+                        // The map must follow the currently displayed page. Do not let a stale
+                        // feature select a row that makes DataGrip navigate to another page.
+                        if (!isVisibleRow(row)) return;
+                        grid.getSelectionModel().clearSelection();
                         ModelIndex<GridColumn> column = grid.getContextColumn();
                         if (column == null && !grid.getVisibleColumns().asList().isEmpty()) {
                             column = grid.getVisibleColumns().asList().get(0);
@@ -161,6 +172,14 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
             SwingUtilities.invokeLater(() -> addMapSource(null));
             return new JBCefJSQuery.Response("");
         });
+        editSourceQuery.addHandler(sourceName -> {
+            SwingUtilities.invokeLater(() -> editMapSource(sourceName));
+            return new JBCefJSQuery.Response("");
+        });
+        removeSourceQuery.addHandler(sourceName -> {
+            SwingUtilities.invokeLater(() -> removeMapSource(sourceName));
+            return new JBCefJSQuery.Response("");
+        });
         defaultSourceQuery.addHandler(sourceName -> {
             SwingUtilities.invokeLater(() -> {
                 if (sources.stream().anyMatch(source -> source.name().equals(sourceName))) {
@@ -169,6 +188,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                     browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(sourceName) + ");");
                 }
             });
+            return new JBCefJSQuery.Response("");
+        });
+        reloadQuery.addHandler(ignored -> {
+            SwingUtilities.invokeLater(this::reload);
             return new JBCefJSQuery.Response("");
         });
         component.setBorder(BorderFactory.createLineBorder(BORDER));
@@ -220,44 +243,207 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     private void addMapSource(ActionEvent event) {
-        JTextField name = new JTextField("My map");
-        JTextField url = new JTextField("https://{s}.example.com/{z}/{x}/{y}.png");
-        JTextField attribution = new JTextField("Map data contributors");
-        JTextField subdomains = new JTextField("abc");
-        JCheckBox tms = new JCheckBox("TMS Y axis (invert tile row)");
-        JPanel fields = new JPanel(new GridLayout(0, 1, 4, 4));
-        fields.add(new JLabel("Name")); fields.add(name);
-        fields.add(new JLabel("Tile URL template (XYZ/TMS)")); fields.add(url);
-        fields.add(new JLabel("Attribution")); fields.add(attribution);
-        fields.add(new JLabel("Subdomains for {s} (e.g. abc or 1234)")); fields.add(subdomains);
-        fields.add(tms);
-        int result = JOptionPane.showConfirmDialog(grid.getMainResultViewComponent(), fields, "Add Custom Map Source", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (result != JOptionPane.OK_OPTION) return;
-        MapSource source = new MapSource(name.getText().trim(), url.getText().trim(), attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim());
-        if (source.name().isBlank() || source.template().isBlank()) return;
+        MapSource source = showMapSourceDialog(null);
+        if (source == null) return;
+        if (sources.stream().anyMatch(existing -> existing.name().equalsIgnoreCase(source.name()))) {
+            Messages.showWarningDialog(grid.getMainResultViewComponent(), "A map source with this name already exists.", "Geo Viewer Plus");
+            return;
+        }
         sources.add(source);
         selectedSourceName = source.name();
         persistCustomSources();
         browser.runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(source) + ", true);");
     }
 
+    private void editMapSource(String sourceName) {
+        int index = findSourceIndex(sourceName);
+        if (index < 0 || !sources.get(index).custom()) return;
+        MapSource updated = showMapSourceDialog(sources.get(index));
+        if (updated == null) return;
+        if (sources.stream().anyMatch(existing -> existing != sources.get(index) && existing.name().equalsIgnoreCase(updated.name()))) {
+            Messages.showWarningDialog(grid.getMainResultViewComponent(), "A map source with this name already exists.", "Geo Viewer Plus");
+            return;
+        }
+        MapSource previous = sources.set(index, updated);
+        boolean wasSelected = previous.name().equals(selectedSourceName);
+        boolean wasDefault = previous.name().equals(defaultSourceName);
+        if (wasSelected) selectedSourceName = updated.name();
+        if (wasDefault) defaultSourceName = updated.name();
+        persistCustomSources();
+        if (wasDefault) PropertiesComponent.getInstance().setValue(DEFAULT_SOURCE_KEY, defaultSourceName);
+        browser.runJavaScript("window.geoPlus && window.geoPlus.removeSource(" + quote(previous.name()) + ");");
+        browser.runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(updated) + ", " + wasSelected + ");");
+        if (wasDefault) browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(defaultSourceName) + ");");
+    }
+
+    private void removeMapSource(String sourceName) {
+        int index = findSourceIndex(sourceName);
+        if (index < 0 || !sources.get(index).custom()) return;
+        MapSource source = sources.get(index);
+        int result = JOptionPane.showConfirmDialog(
+                grid.getMainResultViewComponent(),
+                "Remove custom map source ‘" + source.name() + "’?\nThis does not affect built-in sources.",
+                "Remove Custom Map Source",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (result != JOptionPane.OK_OPTION) return;
+
+        boolean wasSelected = source.name().equals(selectedSourceName);
+        boolean wasDefault = source.name().equals(defaultSourceName);
+        sources.remove(index);
+        persistCustomSources();
+        browser.runJavaScript("window.geoPlus && window.geoPlus.removeSource(" + quote(source.name()) + ");");
+        if (wasSelected) {
+            String fallback = sources.isEmpty() ? "" : sources.get(0).name();
+            selectedSourceName = fallback;
+            if (!fallback.isBlank()) {
+                browser.runJavaScript("window.geoPlus && window.geoPlus.switchSource(" + quote(fallback) + ");");
+            }
+        }
+        if (wasDefault) {
+            String fallback = sources.isEmpty() ? "" : sources.get(0).name();
+            defaultSourceName = fallback;
+            PropertiesComponent.getInstance().setValue(DEFAULT_SOURCE_KEY, fallback);
+            if (!fallback.isBlank()) browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(fallback) + ");");
+        }
+    }
+
+    private int findSourceIndex(String sourceName) {
+        for (int i = 0; i < sources.size(); i++) {
+            if (sources.get(i).name().equals(sourceName)) return i;
+        }
+        return -1;
+    }
+
+    private MapSource showMapSourceDialog(MapSource initial) {
+        JTextField name = new JTextField(initial == null ? "My map" : initial.name(), 42);
+        JTextField url = new JTextField(initial == null ? "https://{s}.example.com/{z}/{x}/{y}.png" : initial.template(), 42);
+        JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution(), 42);
+        JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains(), 42);
+        JCheckBox tms = new JCheckBox("TMS Y axis (invert tile row)", initial != null && initial.tms());
+        JComboBox<MapSourceType> type = new JComboBox<>(MapSourceType.values());
+        JTextField vectorLayer = new JTextField(initial == null ? "sliced" : initial.vectorLayer(), 42);
+        if (initial != null) type.setSelectedItem(initial.type());
+        JBLabel vectorLayerLabel = new JBLabel("MVT layer names");
+        JPanel fields = new JPanel(new GridBagLayout());
+        fields.setBorder(JBUI.Borders.empty(8, 12, 4, 12));
+        fields.setPreferredSize(new Dimension(620, 390));
+        int row = 0;
+        row = addFormRow(fields, row, "Name", name, "Shown in the map source menu.");
+        row = addFormRow(fields, row, "Source type", type, "Raster sources use XYZ/TMS tiles; MVT sources use protobuf vector tiles.");
+        row = addFormRow(fields, row, "Tile URL template", url, "Use {z}, {x}, {y}; add {s} when the server uses subdomains.");
+        row = addFormRow(fields, row, "Attribution", attribution, "Keep the provider credit visible on the map.");
+        row = addFormRow(fields, row, "Subdomains", subdomains, "For {s}, for example abc or 0123. Leave blank when unused.");
+        row = addFormRow(fields, row, vectorLayerLabel, vectorLayer, "For MVT, enter names such as roads, water, landuse; comma-separate multiple names.");
+        GridBagConstraints checkboxConstraints = new GridBagConstraints();
+        checkboxConstraints.gridx = 1; checkboxConstraints.gridy = row; checkboxConstraints.gridwidth = 2;
+        checkboxConstraints.anchor = GridBagConstraints.WEST; checkboxConstraints.insets = new Insets(8, 0, 4, 0);
+        fields.add(tms, checkboxConstraints);
+        type.addActionListener(ignored -> {
+            boolean mvt = type.getSelectedItem() == MapSourceType.MVT;
+            vectorLayer.setEnabled(mvt);
+            vectorLayerLabel.setEnabled(mvt);
+            tms.setEnabled(!mvt);
+            if (mvt) tms.setSelected(false);
+        });
+        boolean initialMvt = type.getSelectedItem() == MapSourceType.MVT;
+        vectorLayer.setEnabled(initialMvt);
+        vectorLayerLabel.setEnabled(initialMvt);
+        tms.setEnabled(!initialMvt);
+        if (initialMvt) tms.setSelected(false);
+        String title = initial == null ? "Add Custom Map Source" : "Edit Custom Map Source";
+        Window owner = SwingUtilities.getWindowAncestor(grid.getMainResultViewComponent());
+        JDialog dialog = new JDialog(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        JPanel root = new JPanel(new BorderLayout(0, 8));
+        root.setBorder(JBUI.Borders.empty(8));
+        root.add(fields, BorderLayout.CENTER);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JButton cancel = new JButton("Cancel");
+        JButton save = new JButton(initial == null ? "Add source" : "Save changes");
+        actions.add(cancel);
+        actions.add(save);
+        root.add(actions, BorderLayout.SOUTH);
+        dialog.setContentPane(root);
+
+        MapSource[] result = new MapSource[1];
+        cancel.addActionListener(ignored -> dialog.dispose());
+        save.addActionListener(ignored -> {
+            String sourceName = name.getText().trim();
+            String template = url.getText().trim();
+            if (sourceName.isBlank() || template.isBlank()) {
+                JOptionPane.showMessageDialog(dialog, "Name and tile URL template are required.", "Geo Viewer Plus", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            String validation = validateTileTemplate(template);
+            if (validation != null) {
+                JOptionPane.showMessageDialog(dialog, validation, "Geo Viewer Plus", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            MapSourceType sourceType = (MapSourceType) type.getSelectedItem();
+            result[0] = new MapSource(sourceName, template, attribution.getText().trim(), tms.isSelected(), subdomains.getText().trim(), true, sourceType, vectorLayer.getText().trim());
+            dialog.dispose();
+        });
+        dialog.getRootPane().setDefaultButton(save);
+        dialog.setResizable(false);
+        dialog.pack();
+        dialog.setMinimumSize(new Dimension(680, 500));
+        dialog.setLocationRelativeTo(owner);
+        dialog.setVisible(true);
+        return result[0];
+    }
+
+    private static int addFormRow(JPanel panel, int row, String label, JComponent field, String help) {
+        return addFormRow(panel, row, new JBLabel(label), field, help);
+    }
+
+    private static int addFormRow(JPanel panel, int row, JComponent label, JComponent field, String help) {
+        GridBagConstraints labelConstraints = new GridBagConstraints();
+        labelConstraints.gridx = 0; labelConstraints.gridy = row; labelConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        labelConstraints.insets = new Insets(6, 0, 2, 14);
+        panel.add(label, labelConstraints);
+
+        GridBagConstraints fieldConstraints = new GridBagConstraints();
+        fieldConstraints.gridx = 1; fieldConstraints.gridy = row; fieldConstraints.gridwidth = 2;
+        fieldConstraints.weightx = 1; fieldConstraints.fill = GridBagConstraints.HORIZONTAL;
+        fieldConstraints.insets = new Insets(3, 0, 1, 0);
+        panel.add(field, fieldConstraints);
+
+        if (help == null || help.isBlank()) return row + 1;
+        JBLabel hint = new JBLabel(help);
+        hint.setForeground(JBColor.GRAY);
+        GridBagConstraints helpConstraints = new GridBagConstraints();
+        helpConstraints.gridx = 1; helpConstraints.gridy = row + 1; helpConstraints.gridwidth = 2;
+        helpConstraints.weightx = 1; helpConstraints.fill = GridBagConstraints.HORIZONTAL;
+        helpConstraints.insets = new Insets(0, 0, 3, 0);
+        panel.add(hint, helpConstraints);
+        return row + 2;
+    }
+
     private void loadPage() {
         String html = readResource(HTML_RESOURCE);
+        html = html.replace("__LEAFLET_CSS__", readResource("/leaflet.css"))
+                .replace("__LEAFLET_JS__", readResource("/leaflet.js"))
+                .replace("__LEAFLET_VECTORGRID_JS__", readResource("/leaflet-vectorgrid.js"));
         String query = selectQuery.inject("String(row)");
         String ready = readyQuery.inject("ready");
         String source = sourceQuery.inject("String(name)");
         String addSource = addSourceQuery.inject("open");
+        String editSource = editSourceQuery.inject("String(name)");
+        String removeSource = removeSourceQuery.inject("String(name)");
         String defaultSource = defaultSourceQuery.inject("String(name)");
-        String bootstrap = "<script>window.dg=window.dg||{};window.dg.selectInTable=function(row){" + query + "};window.dg.changeSource=function(name){" + source + "};window.dg.addMapSource=function(){" + addSource + "};window.dg.setDefaultSource=function(name){" + defaultSource + "};</script>";
+        String reload = reloadQuery.inject("refresh");
+        String bootstrap = "<script>window.dg=window.dg||{};window.dg.selectInTable=function(row){" + query + "};window.dg.changeSource=function(name){" + source + "};window.dg.addMapSource=function(){" + addSource + "};window.dg.editMapSource=function(name){" + editSource + "};window.dg.removeMapSource=function(name){" + removeSource + "};window.dg.setDefaultSource=function(name){" + defaultSource + "};window.dg.refreshMap=function(){" + reload + "};</script>";
         html = html.replace("__GEO_VIEWER_READY__", ready);
         browser.loadHTML(html.replace("</body>", bootstrap + "</body>"), "https://geo-viewer-plus.local/");
     }
 
     private void bootstrapPage() {
         if (!pageReady) return;
-        for (MapSource source : sources) {
-            browser.runJavaScript("window.geoPlus.addSource(" + sourceJson(source) + ");");
-        }
+        String sourceJson = sources.stream().map(CustomGeoViewerContent::sourceJson).collect(java.util.stream.Collectors.joining(","));
+        browser.runJavaScript("window.geoPlus && window.geoPlus.addSources([" + sourceJson + "]);" );
         if (!defaultSourceName.isBlank()) browser.runJavaScript("window.geoPlus.setDefaultSource(" + quote(defaultSourceName) + ");");
         if (!selectedSourceName.isBlank()) browser.runJavaScript("window.geoPlus.switchSource(" + quote(selectedSourceName) + ");");
         reload();
@@ -265,11 +451,18 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private void reload() {
         lastSelectionKey = "";
+        payload = payload(GeoDataExtractor.extract(grid, 500));
+        lastVisibleRowsKey = visibleRowsKey();
         browser.runJavaScript("window.geoPlus && window.geoPlus.loadFeatures(" + payload + ");");
     }
 
-    private void syncGridSelection() {
+    private void syncGridState() {
         if (!pageReady || !grid.isReady() || browser.isDisposed()) return;
+        String visibleRowsKey = visibleRowsKey();
+        if (!visibleRowsKey.equals(lastVisibleRowsKey)) {
+            lastVisibleRowsKey = visibleRowsKey;
+            reload();
+        }
         int[] rows = grid.getSelectionModel().getSelectedRows().asArray();
         String key = Arrays.toString(rows);
         if (key.equals(lastSelectionKey)) return;
@@ -279,17 +472,30 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         browser.runJavaScript("window.geoPlus && window.geoPlus.focusRows([" + rowArray + "], false);");
     }
 
+    private boolean isVisibleRow(int row) {
+        return grid.getVisibleRows().asList().stream().anyMatch(visible -> visible.asInteger() == row);
+    }
+
+    private String visibleRowsKey() {
+        if (!grid.isReady()) return "";
+        StringBuilder key = new StringBuilder();
+        for (ModelIndex<GridRow> row : grid.getVisibleRows().asList()) {
+            if (key.length() > 0) key.append(',');
+            key.append(row.asInteger());
+        }
+        return key.toString();
+    }
+
     private static List<MapSource> defaultSources() {
         return List.of(
-                new MapSource("高德道路（国内）", "https://wprd0{s}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8&ltype=11", "© 高德地图 · GCJ-02", false, "1234"),
-                new MapSource("高德道路（简洁）", "https://wprd0{s}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8", "© 高德地图 · GCJ-02", false, "1234"),
-                new MapSource("高德影像（国内）", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}", "© 高德地图 · 影像 · GCJ-02", false, "1234"),
-                new MapSource("高德影像（含路网）", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&ltype=11&x={x}&y={y}&z={z}", "© 高德地图 · 影像/路网 · GCJ-02", false, "1234"),
+                new MapSource("高德道路", "https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", "© 高德地图 · GCJ-02 · WGS84 data may be offset", false, "1234"),
+                new MapSource("高德影像", "https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}", "© 高德地图 · GCJ-02 · WGS84 data may be offset", false, "1234"),
+                new MapSource("腾讯道路（兼容）", "https://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0&scene=0", "© 腾讯地图 · GCJ-02 · WGS84 data may be offset", true, "0123"),
                 new MapSource("OSM Standard", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors", false),
                 new MapSource("OSM Humanitarian", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "© OpenStreetMap contributors · HOT", false, "abc"),
                 new MapSource("OpenTopoMap", "https://tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors · SRTM", false),
-                new MapSource("Esri World Imagery", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "© Esri", false),
-                new MapSource("腾讯道路（实验）", "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1&version=376", "© 腾讯地图 · 坐标系请按数据源校正", false, "0123")
+                new MapSource("OpenFreeMap 开源矢量（每周更新）", "https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf", "© OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors", false, "", false, MapSourceType.MVT, "water,waterway,landcover,landuse,park,building,transportation,boundary,place,poi"),
+                new MapSource("Esri World Imagery（需可访问 ArcGIS Online）", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "© Esri", false)
         );
     }
 
@@ -299,9 +505,14 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         if (stored.isBlank()) return result;
         for (String item : stored.split("\\n")) {
             String[] parts = item.split("\\|", -1);
-            if (parts.length != 4 && parts.length != 5) continue;
+            if (parts.length < 4 || parts.length > 7) continue;
             try {
-                result.add(new MapSource(decode(parts[0]), decode(parts[1]), decode(parts[2]), Boolean.parseBoolean(parts[3]), parts.length == 5 ? decode(parts[4]) : ""));
+                MapSourceType type = parts.length >= 6 ? MapSourceType.fromId(decode(parts[5])) : MapSourceType.RASTER_XYZ;
+                String vectorLayer = parts.length >= 7 ? decode(parts[6]) : "";
+                String template = decode(parts[1]);
+                if (validateTileTemplate(template) == null) {
+                    result.add(new MapSource(decode(parts[0]), template, decode(parts[2]), Boolean.parseBoolean(parts[3]), parts.length >= 5 ? decode(parts[4]) : "", true, type, vectorLayer));
+                }
             } catch (IllegalArgumentException ignored) {
             }
         }
@@ -309,16 +520,17 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     private void persistCustomSources() {
-        int firstCustom = defaultSources().size();
         StringBuilder value = new StringBuilder();
-        for (int i = firstCustom; i < sources.size(); i++) {
+        for (MapSource source : sources) {
+            if (!source.custom()) continue;
             if (value.length() > 0) value.append('\n');
-            MapSource source = sources.get(i);
             value.append(encode(source.name())).append('|')
                     .append(encode(source.template())).append('|')
                     .append(encode(source.attribution())).append('|')
                     .append(source.tms()).append('|')
-                    .append(encode(source.subdomains()));
+                    .append(encode(source.subdomains())).append('|')
+                    .append(encode(source.type().id())).append('|')
+                    .append(encode(source.vectorLayer()));
         }
         PropertiesComponent.getInstance().setValue(CUSTOM_SOURCES_KEY, value.toString());
     }
@@ -327,11 +539,15 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private static String decode(String value) { return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8); }
 
     private static String sourceJson(MapSource source) {
-        return "{\"name\":\"" + json(source.name()) + "\",\"template\":\"" + json(source.template()) + "\",\"attribution\":\"" + json(source.attribution()) + "\",\"tms\":" + source.tms() + ",\"subdomains\":\"" + json(source.subdomains()) + "\"}";
+        return "{\"name\":\"" + json(source.name()) + "\",\"template\":\"" + json(source.template()) + "\",\"attribution\":\"" + json(source.attribution()) + "\",\"tms\":" + source.tms() + ",\"subdomains\":\"" + json(source.subdomains()) + "\",\"custom\":" + source.custom() + ",\"type\":\"" + json(source.type().id()) + "\",\"vectorLayer\":\"" + json(source.vectorLayer()) + "\"}";
     }
 
     private static String payload(GeoDataExtractor.Snapshot snapshot) {
-        StringBuilder out = new StringBuilder("{\"geometryColumn\":").append(quote(snapshot.geometryColumn())).append(",\"features\":[");
+        StringBuilder out = new StringBuilder("{\"geometryColumn\":").append(quote(snapshot.geometryColumn()))
+                .append(",\"visibleRows\":").append(snapshot.visibleRows())
+                .append(",\"truncatedRows\":").append(snapshot.truncatedRows())
+                .append(",\"skippedRows\":").append(snapshot.skippedRows())
+                .append(",\"features\":[");
         for (int i = 0; i < snapshot.features().size(); i++) {
             if (i > 0) out.append(',');
             GeoDataExtractor.Feature f = snapshot.features().get(i);
@@ -357,7 +573,38 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private static String quote(String value) { return "\"" + json(value) + "\""; }
     private static String json(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t");
+        StringBuilder escaped = new StringBuilder(value.length() + 16);
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '\\' -> escaped.append("\\\\");
+                case '"' -> escaped.append("\\\"");
+                case '\b' -> escaped.append("\\b");
+                case '\f' -> escaped.append("\\f");
+                case '\n' -> escaped.append("\\n");
+                case '\r' -> escaped.append("\\r");
+                case '\t' -> escaped.append("\\t");
+                default -> {
+                    if (c < 0x20 || c == 0x2028 || c == 0x2029) escaped.append(String.format("\\u%04x", (int) c));
+                    else escaped.append(c);
+                }
+            }
+        }
+        return escaped.toString();
+    }
+
+    private static String validateTileTemplate(String template) {
+        if (!template.contains("{z}") || !template.contains("{x}") || !template.contains("{y}")) {
+            return "Tile URL template must contain {z}, {x}, and {y}.";
+        }
+        try {
+            String probe = template.replace("{s}", "a").replace("{z}", "0").replace("{x}", "0").replace("{y}", "0");
+            String scheme = URI.create(probe).getScheme();
+            if (!"https".equalsIgnoreCase(scheme)) return "Only HTTPS tile sources are allowed to protect result-set location privacy.";
+        } catch (IllegalArgumentException ex) {
+            return "Tile URL template is not a valid HTTPS URL.";
+        }
+        return null;
     }
 
     @Override public void dispose() {
@@ -367,7 +614,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         readyQuery.dispose();
         sourceQuery.dispose();
         addSourceQuery.dispose();
+        editSourceQuery.dispose();
+        removeSourceQuery.dispose();
         defaultSourceQuery.dispose();
+        reloadQuery.dispose();
         browser.dispose();
     }
 }

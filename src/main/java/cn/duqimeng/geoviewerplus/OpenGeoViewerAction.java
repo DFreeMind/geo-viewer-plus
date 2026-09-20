@@ -19,7 +19,9 @@ public final class OpenGeoViewerAction extends DumbAwareAction {
         DataGrid grid = GridUtil.getDataGrid(event.getDataContext());
         boolean hasGrid = event.getProject() != null && grid != null;
         event.getPresentation().setVisible(hasGrid);
-        event.getPresentation().setEnabled(hasGrid && JBCefApp.isSupported() && GeoDataExtractor.hasGeometry(grid));
+        // Action updates run frequently. Do not scan potentially thousands of cells here;
+        // extraction and its empty-state feedback happen only after the user opens the view.
+        event.getPresentation().setEnabled(hasGrid && JBCefApp.isSupported());
         if (hasGrid) {
             event.getPresentation().setText("Open Geo Viewer Plus");
             event.getPresentation().setDescription("Show the current table or query result on the Geo Viewer Plus map");

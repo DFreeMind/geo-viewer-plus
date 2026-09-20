@@ -3,12 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="color-scheme" content="dark light">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>__LEAFLET_CSS__</style>
   <style>
+    :root { --panel-bg:#0b1424; --panel-surface:#111e32; --panel-raised:#172943; --panel-line:rgba(148,163,184,.2); --panel-muted:#7f91aa; --panel-text:#e7eefb; --panel-blue:#7db7ff; --panel-blue-strong:#3b82f6; --panel-green:#58d6a0; --panel-red:#ff9aa8; }
+    * { box-sizing:border-box; }
     html, body, #map { width:100%; height:100%; margin:0; overflow:hidden; background:#111827; font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    .map-status { position:absolute; z-index:1000; left:14px; bottom:12px; padding:7px 10px; border:1px solid rgba(148,163,184,.32); border-radius:8px; background:rgba(15,23,42,.9); color:#cbd5e1; pointer-events:none; box-shadow:0 5px 15px rgba(0,0,0,.2); backdrop-filter:blur(10px); }
-    .map-status strong { color:#22c55e; font-weight:600; }
-    .map-status .zoom-level { color:#93c5fd; font-weight:600; }
+    button, input, select { font:inherit; }
+    button, input { touch-action:manipulation; }
+    button:focus-visible, input:focus-visible { outline:2px solid var(--panel-blue); outline-offset:2px; }
+    .map-status { display:flex; align-items:center; gap:9px; position:absolute; z-index:1000; left:14px; bottom:12px; max-width:calc(100vw - 28px); padding:8px 11px; border:1px solid rgba(148,163,184,.28); border-radius:12px; background:rgba(9,18,33,.9); color:#b8c6d9; pointer-events:none; box-shadow:0 8px 24px rgba(0,0,0,.24); backdrop-filter:blur(14px); }
+    .status-dot { flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:var(--panel-green); box-shadow:0 0 0 3px rgba(88,214,160,.14); }
+    .status-copy { display:flex; align-items:baseline; gap:4px; white-space:nowrap; }
+    .map-status strong { color:#8ee6bc; font-weight:700; font-variant-numeric:tabular-nums; }
+    .status-divider { width:1px; height:14px; background:rgba(148,163,184,.25); }
+    .map-status .zoom-level { color:var(--panel-blue); font-weight:700; font-variant-numeric:tabular-nums; }
     .leaflet-control-layers { border:1px solid rgba(148,163,184,.35)!important; border-radius:6px!important; background:#0f172a!important; color:#e2e8f0!important; }
     .leaflet-control-zoom a { background:#0f172a!important; color:#e2e8f0!important; border-color:#334155!important; }
     .leaflet-popup-content-wrapper { background:#0f172a; color:#e2e8f0; border:1px solid #334155; border-radius:9px; box-shadow:0 12px 28px rgba(0,0,0,.42); }
@@ -28,52 +36,165 @@
     .feature-key { color:#86efac; font-weight:600; overflow-wrap:anywhere; }
     .feature-value { color:#e2e8f0; min-width:0; overflow-wrap:anywhere; white-space:normal; }
     .map-notice { color:#fbbf24; }
-    .floating-toolbar { position:absolute; z-index:1000; top:14px; right:14px; width:268px; padding:9px; border:1px solid rgba(148,163,184,.35); border-radius:13px; background:rgba(15,23,42,.9); box-shadow:0 12px 30px rgba(0,0,0,.3); color:#cbd5e1; backdrop-filter:blur(14px); transition:width .18s ease, padding .18s ease, background .18s ease, border-color .18s ease; }
-    .floating-toolbar.collapsed { width:auto; padding:0; border-color:transparent; background:transparent; box-shadow:none; backdrop-filter:none; }
-    .toolbar-toggle { display:flex; align-items:center; gap:7px; width:100%; height:32px; padding:0 9px; border:1px solid rgba(148,163,184,.36); border-radius:9px; background:rgba(15,23,42,.94); color:#dbeafe; cursor:pointer; box-shadow:0 7px 18px rgba(0,0,0,.22); }
-    .collapsed .toolbar-toggle { width:40px; height:40px; justify-content:center; padding:0; border-radius:12px; background:rgba(15,23,42,.94); }
-    .toolbar-toggle:hover { border-color:#60a5fa; background:#1e293b; }
-    .toolbar-toggle-icon { color:#60a5fa; font-size:15px; line-height:1; }
-    .toolbar-toggle-label { flex:1; text-align:left; font-size:11px; font-weight:700; letter-spacing:.06em; }
-    .collapsed .toolbar-toggle-label { display:none; }
-    .toolbar-toggle-chevron { color:#94a3b8; font-size:14px; transition:transform .18s ease; }
-    .collapsed .toolbar-toggle-chevron { display:none; }
-    .floating-toolbar:not(.collapsed) .toolbar-toggle-chevron { transform:rotate(180deg); }
-    .toolbar-panel { padding:10px 3px 2px; }
+    .map-retry-button { display:none; pointer-events:auto; min-height:26px; padding:3px 8px; border:1px solid rgba(251,191,36,.45); border-radius:7px; background:rgba(120,53,15,.7); color:#fde68a; cursor:pointer; }
+    .map-retry-button.visible { display:inline-flex; }
+    .floating-toolbar { position:absolute; z-index:1000; top:16px; right:16px; width:min(366px, calc(100vw - 32px)); border:1px solid var(--panel-line); border-radius:20px; background:linear-gradient(155deg, rgba(13,27,48,.98), rgba(7,15,28,.97)); box-shadow:0 22px 60px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.025) inset; color:var(--panel-text); backdrop-filter:blur(22px); transition:width .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+    .floating-toolbar::before { content:''; position:absolute; top:-1px; left:30px; right:30px; height:1px; background:linear-gradient(90deg, transparent, rgba(125,183,255,.7), transparent); pointer-events:none; }
+    .floating-toolbar.collapsed { width:52px; border-color:transparent; background:transparent; box-shadow:none; backdrop-filter:none; }
+    .toolbar-topbar { display:flex; align-items:center; justify-content:space-between; min-height:68px; padding:12px 13px 11px 15px; border-bottom:1px solid rgba(148,163,184,.13); }
+    .collapsed .toolbar-topbar { min-height:52px; padding:0; border:0; }
+    .toolbar-brand { display:flex; align-items:center; gap:10px; min-width:0; }
+    .collapsed .toolbar-brand { display:none; }
+    .toolbar-brand-mark { display:grid; flex:0 0 auto; width:32px; height:32px; place-items:center; border:1px solid rgba(125,183,255,.35); border-radius:10px; background:linear-gradient(145deg, rgba(59,130,246,.26), rgba(30,64,175,.2)); color:var(--panel-blue); box-shadow:0 7px 18px rgba(37,99,235,.18); }
+    .toolbar-brand-mark svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+    .toolbar-brand-copy { display:flex; min-width:0; flex-direction:column; gap:2px; }
+    .toolbar-brand-kicker { color:#7c91ad; font-size:9px; font-weight:750; letter-spacing:.14em; }
+    .toolbar-brand-title { overflow:hidden; color:#f5f8ff; font-size:14px; font-weight:750; text-overflow:ellipsis; white-space:nowrap; }
+    .toolbar-head-actions { display:flex; align-items:center; gap:8px; }
+    .toolbar-live { display:flex; align-items:center; gap:5px; padding:4px 7px; border:1px solid rgba(88,214,160,.18); border-radius:999px; background:rgba(16,185,129,.08); color:#9ee8c5; font-size:9px; font-weight:700; }
+    .toolbar-live-dot { width:5px; height:5px; border-radius:50%; background:var(--panel-green); box-shadow:0 0 0 3px rgba(88,214,160,.1); }
+    .collapsed .toolbar-live { display:none; }
+    .toolbar-toggle { display:grid; width:32px; height:32px; place-items:center; padding:0; border:1px solid rgba(148,163,184,.25); border-radius:10px; background:rgba(23,41,67,.84); color:#c9ddf7; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.18); }
+    .collapsed .toolbar-toggle { width:52px; height:52px; border-color:rgba(125,183,255,.38); border-radius:15px; background:rgba(11,20,36,.96); box-shadow:0 14px 30px rgba(0,0,0,.3); }
+    .toolbar-toggle:hover { border-color:var(--panel-blue); background:#19345a; transform:translateY(-1px); }
+    .toolbar-toggle:active { transform:translateY(0); }
+    .toolbar-toggle svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; transition:transform .2s ease; }
+    .floating-toolbar:not(.collapsed) .toolbar-toggle svg { transform:rotate(180deg); }
+    .toolbar-panel { padding:15px; }
     .floating-toolbar.collapsed .toolbar-panel { display:none; }
-    .floating-toolbar-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:9px; padding:0 2px; }
-    .floating-toolbar-title { color:#f8fafc; font-size:11px; font-weight:700; letter-spacing:.08em; }
-    .floating-toolbar-geometry { max-width:100px; overflow:hidden; color:#93c5fd; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
-    .floating-toolbar select { width:100%; height:32px; margin-bottom:8px; padding:0 8px; border:1px solid #475569; border-radius:8px; background:#1e293b; color:#f8fafc; outline:none; }
-    .floating-toolbar select:focus { border-color:#60a5fa; box-shadow:0 0 0 2px rgba(96,165,250,.2); }
-    .toolbar-actions { display:grid; grid-template-columns:1fr 1.2fr; gap:7px; }
-    .toolbar-actions button { width:100%; height:29px; border:1px solid #475569; border-radius:7px; background:#263449; color:#dbeafe; cursor:pointer; }
-    .toolbar-actions button:hover { background:#334155; border-color:#60a5fa; }
-    .toolbar-actions .toolbar-default-button { color:#bfdbfe; }
-    .floating-toolbar-note { margin-top:8px; color:#64748b; font-size:10px; line-height:1.35; }
+    .floating-toolbar-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin:0 1px 14px; }
+    .floating-toolbar-title { color:#f8fafc; font-size:18px; font-weight:750; letter-spacing:-.02em; }
+    .floating-toolbar-subtitle { max-width:248px; margin-top:4px; color:var(--panel-muted); font-size:10px; line-height:1.45; }
+    .floating-toolbar-geometry { max-width:112px; overflow:hidden; padding:5px 8px; border:1px solid rgba(125,183,255,.24); border-radius:8px; background:rgba(59,130,246,.09); color:#a9ceff; font-size:10px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+    .toolbar-group { position:relative; z-index:1; margin-bottom:11px; padding:12px; border:1px solid rgba(148,163,184,.15); border-radius:15px; background:rgba(17,30,50,.72); }
+    .toolbar-group.source-group { z-index:30; padding-bottom:11px; }
+    .toolbar-section-label { display:flex; align-items:center; justify-content:space-between; margin:0 0 8px; color:#d9e5f5; font-size:10px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+    .toolbar-section-label::after { content:'BASE MAP'; color:#607894; font-size:8px; letter-spacing:.11em; }
+    .toolbar-section-label.manage-label::after { content:'ACTIONS'; }
+    .source-picker { position:relative; z-index:10; margin-bottom:9px; }
+    .coordinate-mode { display:flex; align-items:center; gap:8px; min-height:30px; margin:0 0 7px; padding:0 9px; border:1px solid rgba(148,163,184,.2); border-radius:8px; background:rgba(6,14,27,.44); color:#9db1ca; font-size:10px; }
+    .coordinate-mode span { flex:0 0 auto; }
+    .coordinate-mode select { width:100%; min-width:0; border:0; outline:0; background:transparent; color:#e7eefb; font:inherit; cursor:pointer; }
+    .coordinate-mode option { background:#10213a; color:#e7eefb; }
+    .source-picker-button { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:48px; padding:0 12px; border:1px solid rgba(125,183,255,.3); border-radius:11px; background:linear-gradient(100deg, rgba(31,58,92,.95), rgba(22,42,70,.92)); color:#f6f9ff; outline:none; cursor:pointer; text-align:left; box-shadow:0 7px 18px rgba(0,0,0,.12); transition:border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+    .source-picker-button:hover, .source-picker-button[aria-expanded="true"] { border-color:var(--panel-blue); background:linear-gradient(100deg, rgba(36,71,112,.98), rgba(24,49,83,.96)); box-shadow:0 0 0 3px rgba(96,165,250,.12), 0 9px 22px rgba(0,0,0,.16); }
+    .source-picker-leading { display:grid; flex:0 0 auto; width:25px; height:25px; margin-right:9px; place-items:center; border-radius:8px; background:rgba(125,183,255,.13); color:var(--panel-blue); }
+    .source-picker-leading svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+    .source-picker-value { min-width:0; overflow:hidden; font-size:12px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+    .source-picker-chevron { margin-left:8px; color:#a4bad4; font-size:15px; transition:transform .18s ease; }
+    .source-picker-button[aria-expanded="true"] .source-picker-chevron { transform:rotate(180deg); }
+    .source-menu { position:absolute; z-index:100; left:0; right:0; top:calc(100% + 8px); display:none; flex-direction:column; max-height:min(360px, calc(100vh - 175px)); overflow:hidden; padding:8px; border:1px solid rgba(125,183,255,.38); border-radius:14px; background:#0e1b2f; box-shadow:0 22px 48px rgba(0,0,0,.5); }
+    .source-menu.open { display:flex; }
+    .source-menu.open-up { top:auto; bottom:calc(100% + 8px); }
+    .source-menu-head { display:flex; align-items:center; justify-content:space-between; margin:0 3px 7px; color:#dce9fa; font-size:10px; font-weight:750; }
+    .source-menu-count { color:#7890ad; font-size:9px; font-weight:600; }
+    .source-search { display:flex; align-items:center; gap:7px; min-height:34px; margin:0 0 7px; padding:0 9px; border:1px solid rgba(148,163,184,.2); border-radius:9px; background:rgba(6,14,27,.64); color:#88a2c1; }
+    .source-search:focus-within { border-color:rgba(125,183,255,.7); box-shadow:0 0 0 2px rgba(96,165,250,.1); }
+    .source-search svg { flex:0 0 auto; width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .source-search input { width:100%; min-width:0; padding:0; border:0; outline:0; background:transparent; color:#e7eefb; font-size:11px; }
+    .source-search input::placeholder { color:#607894; }
+    .source-menu-list { min-height:0; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#496581 transparent; }
+    .source-menu-list::-webkit-scrollbar { width:7px; }
+    .source-menu-list::-webkit-scrollbar-track { background:transparent; }
+    .source-menu-list::-webkit-scrollbar-thumb { background:#496581; border-radius:8px; }
+    .source-menu-group { padding:7px 8px 4px; color:#6f87a4; font-size:9px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+    .source-menu-option { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:36px; margin:2px 0; padding:0 9px; border:0; border-radius:8px; background:transparent; color:#cfe0f5; cursor:pointer; text-align:left; white-space:nowrap; transition:background .14s ease, color .14s ease; }
+    .source-menu-option::after { content:'›'; color:#5d7694; font-size:15px; opacity:0; transform:translateX(-3px); transition:opacity .14s ease, transform .14s ease; }
+    .source-menu-option:hover, .source-menu-option[aria-selected="true"] { background:#1c3659; color:#f8fbff; }
+    .source-menu-option:hover::after, .source-menu-option[aria-selected="true"]::after { opacity:1; transform:translateX(0); }
+    .source-menu-option[aria-selected="true"] { box-shadow:inset 2px 0 var(--panel-blue); }
+    .source-menu-empty { padding:18px 9px; color:#7890ad; text-align:center; }
+    .source-select-hidden { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+    .toolbar-source-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:23px; color:#8297b0; font-size:10px; }
+    .toolbar-source-meta span:last-child { min-width:0; max-width:186px; overflow:hidden; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
+    .toolbar-source-kind { display:inline-flex; align-items:center; gap:5px; padding:4px 7px; border-radius:6px; background:rgba(16,185,129,.11); color:#a7f3d0; font-weight:650; }
+    .toolbar-source-kind::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--panel-green); }
+    .toolbar-source-kind.custom { background:rgba(234,179,8,.13); color:#fcd34d; }
+    .toolbar-source-kind.custom::before { background:#facc15; }
+    .toolbar-actions, .toolbar-manage-actions { display:grid; grid-template-columns:1.05fr 1fr; gap:8px; }
+    .toolbar-manage-actions { grid-template-columns:1fr 1fr; margin-top:8px; }
+    .toolbar-actions button, .toolbar-manage-actions button { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; min-height:38px; border:1px solid rgba(148,163,184,.22); border-radius:9px; background:#1b2d47; color:#dbeafe; cursor:pointer; transition:background .16s ease, border-color .16s ease, transform .16s ease, color .16s ease; }
+    .toolbar-actions button:hover, .toolbar-manage-actions button:hover { background:#274365; border-color:#6eaaf1; color:#f8fbff; transform:translateY(-1px); }
+    .toolbar-actions button:active, .toolbar-manage-actions button:active { transform:translateY(0); }
+    .toolbar-actions button:disabled, .toolbar-manage-actions button:disabled { cursor:not-allowed; opacity:.4; transform:none; }
+    .toolbar-actions .toolbar-default-button { border-color:rgba(125,183,255,.36); background:rgba(59,130,246,.16); color:#bfdbfe; }
+    .toolbar-manage-actions .toolbar-remove-button { color:var(--panel-red); }
+    .toolbar-icon { display:inline-flex; }
+    .toolbar-icon svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .toolbar-link-status { display:flex; align-items:center; gap:9px; margin:0 1px 12px; padding:10px; border:1px solid rgba(88,214,160,.16); border-radius:12px; background:linear-gradient(100deg, rgba(16,185,129,.1), rgba(16,185,129,.025)); }
+    .toolbar-link-icon { display:grid; flex:0 0 auto; width:28px; height:28px; place-items:center; border-radius:8px; background:rgba(88,214,160,.13); color:#86e8bc; }
+    .toolbar-link-icon svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .toolbar-link-copy { min-width:0; }
+    .toolbar-link-title { color:#c9f7df; font-size:10px; font-weight:700; }
+    .toolbar-link-subtitle { margin-top:2px; overflow:hidden; color:#7fa993; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+    .floating-toolbar-note { margin:0 2px 1px; color:#7288a3; font-size:10px; line-height:1.55; }
+    /* The map is already inside a tool window: keep its controls deliberately compact. */
+    .floating-toolbar { top:10px; right:10px; width:min(258px, calc(100vw - 20px)); border-radius:13px; }
+    .floating-toolbar::before, .toolbar-brand-kicker, .toolbar-live, .floating-toolbar-head, .toolbar-link-status, .toolbar-section-label, .toolbar-source-meta, .floating-toolbar-note { display:none; }
+    .toolbar-topbar { min-height:46px; padding:7px 8px 7px 10px; border-bottom-color:rgba(148,163,184,.12); }
+    .toolbar-brand { gap:7px; }
+    .toolbar-brand-mark { width:25px; height:25px; border-radius:7px; }
+    .toolbar-brand-mark svg { width:14px; height:14px; }
+    .toolbar-brand-title { font-size:11px; }
+    .toolbar-toggle { width:28px; height:28px; border-radius:8px; }
+    .collapsed .toolbar-toggle { width:42px; height:42px; border-radius:11px; }
+    .floating-toolbar.collapsed { width:42px; }
+    .toolbar-panel { padding:8px; }
+    .toolbar-group, .toolbar-group.source-group { margin:0; padding:0; border:0; border-radius:0; background:transparent; }
+    .source-picker { margin:0 0 7px; }
+    .coordinate-mode { min-height:27px; margin-bottom:6px; padding:0 7px; font-size:9px; }
+    .source-picker-button { min-height:36px; padding:0 9px; border-radius:8px; }
+    .source-picker-leading { width:20px; height:20px; margin-right:7px; border-radius:6px; }
+    .source-picker-leading svg { width:12px; height:12px; }
+    .source-picker-value { font-size:11px; }
+    .source-menu { max-height:min(300px, calc(100vh - 110px)); padding:6px; border-radius:10px; }
+    .source-menu-head { margin:0 2px 5px; }
+    .source-search { min-height:29px; margin-bottom:4px; padding:0 7px; }
+    .source-menu-option { min-height:30px; font-size:11px; }
+    .toolbar-actions, .toolbar-manage-actions { grid-template-columns:repeat(3, 1fr); gap:5px; }
+    .toolbar-manage-actions { margin-top:5px; }
+    .toolbar-actions button, .toolbar-manage-actions button { min-height:29px; padding:0 5px; border-radius:7px; font-size:10px; }
+    .toolbar-actions .toolbar-default-button { grid-column:auto; }
+    .leaflet-control-attribution { padding:2px 5px!important; border-radius:5px 0 0 0!important; background:rgba(9,18,33,.86)!important; color:#a9bad0!important; font-size:10px!important; }
+    .leaflet-control-attribution a { color:#9bc5ff!important; }
+    .source-warning { position:absolute; z-index:1000; right:0; bottom:27px; display:none; max-width:min(320px, calc(100vw - 24px)); padding:4px 7px; border:1px solid rgba(251,191,36,.38); border-radius:6px 0 0 6px; background:rgba(69,38,10,.9); color:#fde68a; font-size:10px; line-height:1.35; pointer-events:none; }
+    .source-warning.visible { display:block; }
+    .geo-point-marker { width:18px!important; height:18px!important; margin:-9px 0 0 -9px!important; border:2px solid #f8fbff; border-radius:50% 50% 50% 3px; background:radial-gradient(circle at 35% 30%, #d8ffec 0 14%, #51d49a 18% 46%, #177b57 50% 100%); box-shadow:0 3px 9px rgba(0,0,0,.48), 0 0 0 3px rgba(34,197,94,.18); transform:rotate(-45deg); transition:filter .16s ease, transform .16s ease, box-shadow .16s ease; }
+    .geo-point-marker::after { content:''; position:absolute; inset:4px; border:1px solid rgba(255,255,255,.72); border-radius:50%; }
+    .geo-point-marker.selected { background:radial-gradient(circle at 35% 30%, #fff0d6 0 14%, #ff9b57 18% 46%, #d94b16 50% 100%); box-shadow:0 4px 12px rgba(255,90,31,.5), 0 0 0 4px rgba(255,90,31,.2); filter:saturate(1.12); transform:rotate(-45deg) scale(1.24); }
+    @media (max-width:560px) { .floating-toolbar { top:10px; right:10px; width:min(366px, calc(100vw - 20px)); } .map-status { left:10px; bottom:10px; } .floating-toolbar-title { font-size:16px; } }
+    @media (prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; animation-iteration-count:1!important; } }
   </style>
 </head>
 <body>
 <div id="map"></div>
-<div class="map-status"><strong id="count">0</strong> features · <span id="geometry">waiting for result set</span> · <span id="zoom" class="zoom-level">Z=5</span><span id="mapNotice" class="map-notice"></span></div>
+<div class="map-status"><span class="status-dot"></span><span class="status-copy"><strong id="count">0</strong><span>要素</span></span><span class="status-divider" aria-hidden="true"></span><span id="geometry">等待结果集</span><span class="status-divider" aria-hidden="true"></span><span id="zoom" class="zoom-level">Z=5</span><span id="dataNotice" class="map-notice"></span><span id="mapNotice" class="map-notice"></span><button id="retrySourceButton" class="map-retry-button" type="button">重试</button></div>
+<div id="sourceWarning" class="source-warning" role="status"></div>
 <div class="floating-toolbar collapsed" id="floatingToolbar">
-  <button class="toolbar-toggle" id="toolbarToggle" type="button" aria-expanded="false" title="Map controls"><span class="toolbar-toggle-icon">✦</span><span class="toolbar-toggle-label">MAP CONTROLS</span><span class="toolbar-toggle-chevron">⌄</span></button>
+  <div class="toolbar-topbar">
+    <div class="toolbar-brand"><span class="toolbar-brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 7 4v8l-7 6-7-6V7l7-4Z"/><path d="m5 7 7 4 7-4M12 11v10"/></svg></span><span class="toolbar-brand-copy"><span class="toolbar-brand-kicker">GEO VIEWER PLUS</span><span class="toolbar-brand-title">Map workspace</span></span></div>
+    <div class="toolbar-head-actions"><span class="toolbar-live"><span class="toolbar-live-dot" aria-hidden="true"></span>Linked</span><button class="toolbar-toggle" id="toolbarToggle" type="button" aria-expanded="false" aria-label="Expand map controls" title="Expand map controls"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg></button></div>
+  </div>
   <div class="toolbar-panel" id="toolbarPanel">
-    <div class="floating-toolbar-head"><span class="floating-toolbar-title">GEO VIEWER PLUS</span><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
-    <select id="sourceSelect" aria-label="Map source"></select>
-    <div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button">☆ Default</button><button id="addSourceButton" type="button">＋ Add map</button></div>
-    <div class="floating-toolbar-note">Click a feature to select its row; select a row to locate it.</div>
+    <div class="floating-toolbar-head"><div><div class="floating-toolbar-title">Map controls</div><div class="floating-toolbar-subtitle">Choose a visual layer and keep it in sync with the result grid.</div></div><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
+    <div class="toolbar-link-status"><span class="toolbar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.2-1.2"/></svg></span><span class="toolbar-link-copy"><span class="toolbar-link-title">Map and result grid linked</span><span class="toolbar-link-subtitle">Select a row or feature to focus the other view.</span></span></div>
+    <div class="toolbar-group source-group"><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="选择地图来源"><span class="source-picker-leading" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><span id="sourcePickerValue" class="source-picker-value">选择地图</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox" aria-label="地图来源"><div class="source-menu-head"><span>地图来源</span><span id="sourceMenuCount" class="source-menu-count"></span></div><label class="source-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><input id="sourceSearch" type="search" autocomplete="off" placeholder="筛选地图图层" aria-label="筛选地图图层"></label><div id="sourceMenuList" class="source-menu-list"></div></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div><label class="coordinate-mode" title="仅转换地图显示坐标；不会读取之外的数据，也不会修改数据库"><span>显示坐标</span><select id="coordinateMode" aria-label="显示坐标系"><option value="wgs84">原始 WGS84</option><option value="gcj02">适配高德 / 腾讯（GCJ-02）</option><option value="bd09">适配百度（BD-09）</option></select></label></div>
+    <div class="toolbar-group"><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button" title="Set as default">Default</button><button id="addSourceButton" type="button" title="Add custom map">+ Map</button><button id="refreshDataButton" type="button" title="Refresh result data">Refresh</button></div><div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled title="Edit selected custom map">Edit</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled title="Remove selected custom map">Remove</button></div></div>
   </div>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>__LEAFLET_JS__</script>
+<script>__LEAFLET_VECTORGRID_JS__</script>
 <script>
   const map = L.map('map', { zoomControl:true, preferCanvas:true }).setView([43.79,87.62], 5);
   const layers = {};
+  const sourceDefinitions = new Map();
   const features = new Map();
   const layerHealth = {};
   let selected = [];
   let currentLayer = null;
   let activeSource = '';
+  let coordinateMode = window.localStorage.getItem('geoPlus.coordinateMode') || 'wgs84';
+  let lastPayload = null;
   let lastMapClickRow = -1;
   let lastMapClickAt = 0;
   const defaultStyle = { color:'#22c55e', weight:3, opacity:.9, fillColor:'#22c55e', fillOpacity:.28 };
@@ -81,13 +202,61 @@
   let defaultSource = '';
   function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function template(t) { return t.replaceAll('{s}', '{s}'); }
-  function addSource(source) {
-    const options = { maxZoom: 22, attribution: source.attribution || '', tms: !!source.tms };
+  function vectorTileStyleForLayer(layerName) {
+    const layer = String(layerName || '').toLowerCase();
+    return (properties, zoom) => {
+      const value = String((properties && (properties.class || properties.kind || properties.type || properties.category || properties.subclass)) || '').toLowerCase();
+      const level = Number.isFinite(zoom) ? zoom : map.getZoom();
+      const road = layer.includes('road') || layer.includes('transport') || layer.includes('highway') || value.includes('road') || value.includes('highway');
+      const water = layer.includes('water') || layer.includes('river') || layer.includes('ocean') || value.includes('water') || value.includes('river');
+      const green = layer.includes('park') || layer.includes('landuse') || layer.includes('landcover') || layer.includes('forest') || value.includes('park') || value.includes('forest');
+      const building = layer.includes('building') || value.includes('building');
+      const boundary = layer.includes('boundary') || layer.includes('admin');
+      const point = layer.includes('poi') || layer.includes('place') || layer.includes('label') || layer.includes('point');
+      if (water) return { color:'#4f86a4', weight:.55, opacity:.62, fillColor:'#17384c', fillOpacity:.62, fill:true };
+      if (green) return { color:'#517d68', weight:.45, opacity:.48, fillColor:'#214936', fillOpacity:.34, fill:true };
+      if (building) return { color:'#64748b', weight:.35, opacity:.32, fillColor:'#475569', fillOpacity:.13, fill:true };
+      if (road) {
+        const major = value.includes('motorway') || value.includes('trunk') || value.includes('primary');
+        const minor = value.includes('path') || value.includes('track') || value.includes('service');
+        return { color:major ? '#c9b98a' : '#8b98a8', weight:major ? Math.min(2.4, .7 + level / 10) : minor ? .38 : .62, opacity:level < 7 ? .35 : .7, fill:false };
+      }
+      if (boundary) return { color:'#7884a0', weight:.55, opacity:.45, dashArray:'3 4', fill:false };
+      if (point) return { color:'#d3a76a', weight:.4, opacity:.62, fillColor:'#d3a76a', fillOpacity:.52, radius:Math.min(3.5, 1.5 + level / 10), fill:true };
+      return { color:'#7aa2bf', weight:.72, opacity:.68, fillColor:'#28475b', fillOpacity:.2, fill:true, radius:2.4 };
+    };
+  }
+  function createSourceLayer(source) {
+    const options = { maxZoom:22, attribution:source.attribution || '', tms:!!source.tms };
     if (source.template.indexOf('{s}') >= 0) options.subdomains = (source.subdomains || 'abc').split('');
-    const layer = L.tileLayer(template(source.template), options);
+    if (source.type === 'mvt') {
+      if (!L.vectorGrid || !L.vectorGrid.protobuf) throw new Error('MVT support library is unavailable');
+      const layerNames = (source.vectorLayer || 'sliced').split(',').map(name => name.trim()).filter(Boolean);
+      options.interactive = false;
+      options.rendererFactory = L.canvas.tile;
+      options.vectorTileLayerStyles = {};
+      const knownLayerNames = ['water', 'waterway', 'landcover', 'landuse', 'park', 'forest', 'building', 'road', 'roads', 'transportation', 'highway', 'boundary', 'admin', 'place', 'poi', 'label', 'point'];
+      [...new Set([...layerNames, ...knownLayerNames])].forEach(name => { options.vectorTileLayerStyles[name] = vectorTileStyleForLayer(name); });
+      return L.vectorGrid.protobuf(template(source.template), options);
+    }
+    return L.tileLayer(template(source.template), options);
+  }
+  function addSource(source) {
+    if (sourceDefinitions.has(source.name) && layers[source.name]) return;
+    sourceDefinitions.set(source.name, source);
+    let layer;
+    try { layer = createSourceLayer(source); }
+    catch (error) { layerHealth[source.name] = { errors:1, retries:0, message:String(error.message || error) }; ensureSourceOption(source); if (!currentLayer) activeSource = source.name; updateSourceMeta(); updateTileNotice(); return; }
     ensureSourceOption(source);
     layerHealth[source.name] = { errors:0, retries:0 };
-    layer.on('tileload', updateTileNotice);
+    layer.on('tileload', function() {
+      const health = layerHealth[source.name];
+      health.errors = Math.max(0, health.errors - 1);
+      health.retries = 0;
+      health.message = '';
+      if (source.type === 'mvt') refreshMvtStyles(layer);
+      updateTileNotice();
+    });
     layer.on('tileerror', function() {
       const health = layerHealth[source.name];
       health.errors++;
@@ -100,31 +269,208 @@
     layers[source.name] = layer;
     if (!currentLayer) { currentLayer = layers[source.name]; currentLayer.addTo(map); activeSource = source.name; }
   }
+  function refreshMvtStyles(layer) {
+    if (!layer || !layer.getDataLayerNames || !layer.options || !layer.options.vectorTileLayerStyles) return;
+    const names = layer.getDataLayerNames();
+    let changed = false;
+    names.forEach(name => {
+      if (!layer.options.vectorTileLayerStyles[name]) {
+        layer.options.vectorTileLayerStyles[name] = vectorTileStyleForLayer(name);
+        changed = true;
+      }
+    });
+    if (changed && layer.redraw) layer.redraw();
+  }
+  const openFreeMapSource = { name:'OpenFreeMap 开源矢量（每周更新）', template:'https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf', attribution:'© OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors', tms:false, subdomains:'', custom:false, type:'mvt', vectorLayer:'water,waterway,landcover,landuse,park,building,transportation,boundary,place,poi' };
+  function normalizeBuiltinSource(source) {
+    if (source && source.name === '腾讯道路') return { ...source, name:'腾讯道路（兼容）', template:'https://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0&scene=0', tms:true, subdomains:'0123' };
+    return source;
+  }
+  function addSourcesFromJava(sources) { (sources || []).map(normalizeBuiltinSource).forEach(source => addSource(source)); addSource(openFreeMapSource); updateSourceLabels(); }
   function addSourceFromJava(source, selectIt) { addSource(source); if (selectIt) { const select = document.getElementById('sourceSelect'); if (select) select.value = source.name; switchSource(source.name); } if (window.dg && window.dg.sourcesChanged) window.dg.sourcesChanged(Object.keys(layers)); }
-  function switchSource(name) { if (!layers[name]) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name]; currentLayer.addTo(map); activeSource = name; const select = document.getElementById('sourceSelect'); if (select) select.value = name; updateTileNotice(); }
+  function switchSource(name) { if (!sourceDefinitions.has(name)) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name] || null; activeSource = name; const select = document.getElementById('sourceSelect'); if (select) { select.value = name; updateSourcePickerValue(); renderSourceMenu(); } if (currentLayer) currentLayer.addTo(map); updateSourceMeta(); updateTileNotice(); }
+  function removeSource(name) {
+    if (!sourceDefinitions.has(name)) return;
+    const wasCurrent = activeSource === name;
+    if (currentLayer === layers[name]) map.removeLayer(currentLayer);
+    delete layers[name]; delete layerHealth[name]; sourceDefinitions.delete(name);
+    const option = Array.from(document.querySelectorAll('#sourceSelect option')).find(candidate => candidate.value === name);
+    if (option) option.remove();
+    document.querySelectorAll('#sourceSelect optgroup').forEach(group => { if (!group.children.length) group.remove(); });
+    if (wasCurrent) {
+      const fallback = sourceDefinitions.keys().next().value;
+      currentLayer = null; activeSource = '';
+      if (fallback) switchSource(fallback);
+    }
+    updateSourceLabels(); updateSourceMeta();
+  }
   function ensureSourceOption(source) {
     const select = document.getElementById('sourceSelect');
     if (!select || Array.from(select.options).some(option => option.value === source.name)) return;
-    const option = document.createElement('option'); option.value = source.name; option.dataset.sourceName = source.name; option.textContent = source.name; select.appendChild(option); updateSourceLabels();
+    const groupId = source.custom ? 'custom' : 'builtin';
+    let group = select.querySelector('optgroup[data-group="'+groupId+'"]');
+    if (!group) { group = document.createElement('optgroup'); group.dataset.group = groupId; group.label = groupId === 'custom' ? '自定义地图' : '内置地图'; select.appendChild(group); }
+    const option = document.createElement('option'); option.value = source.name; option.dataset.sourceName = source.name; option.textContent = source.name; group.appendChild(option); updateSourceLabels();
   }
-  function updateSourceLabels() { const select=document.getElementById('sourceSelect'); if(!select) return; Array.from(select.options).forEach(option => { const name=option.dataset.sourceName || option.value; option.textContent=(name===defaultSource?'★ ':'')+name; }); }
+  function updateSourceLabels() {
+    const select=document.getElementById('sourceSelect');
+    if(!select) return;
+    Array.from(select.options).forEach(option => { const name=option.dataset.sourceName || option.value; option.textContent=(name===defaultSource?'★ ':'')+name; });
+    const count=document.getElementById('sourceMenuCount');
+    if (count) count.textContent=sourceDefinitions.size + ' 个地图';
+    renderSourceMenu();
+    updateSourcePickerValue();
+  }
+  function updateSourcePickerValue() {
+    const select=document.getElementById('sourceSelect');
+    const value=document.getElementById('sourcePickerValue');
+    if (!select || !value) return;
+    const source=sourceDefinitions.get(select.value);
+    value.textContent=source ? (select.value === defaultSource ? '★ ' : '') + source.name : '选择地图';
+  }
+  function renderSourceMenu() {
+    const menu=document.getElementById('sourceMenuList');
+    const select=document.getElementById('sourceSelect');
+    if (!select || !menu) return;
+    const search=document.getElementById('sourceSearch');
+    const query=search ? search.value.trim().toLowerCase() : '';
+    menu.innerHTML='';
+    const groups=[
+      { label:'内置地图', custom:false },
+      { label:'自定义地图', custom:true }
+    ];
+    let visible=0;
+    groups.forEach(group => {
+      const items=Array.from(sourceDefinitions.values()).filter(source => !!source.custom === group.custom && (!query || source.name.toLowerCase().includes(query)));
+      if (!items.length) return;
+      visible += items.length;
+      const heading=document.createElement('div');
+      heading.className='source-menu-group';
+      heading.textContent=group.label;
+      menu.appendChild(heading);
+      items.forEach(source => {
+        const item=document.createElement('button');
+        item.type='button';
+        item.className='source-menu-option';
+        item.setAttribute('role','option');
+        item.setAttribute('aria-selected', String(source.name === select.value));
+        item.dataset.value=source.name;
+        item.title=source.name;
+        item.textContent=(source.name === defaultSource ? '★ ' : '') + source.name;
+        item.addEventListener('click', () => {
+          if (search) search.value='';
+          select.value=source.name;
+          select.dispatchEvent(new Event('change', { bubbles:true }));
+          closeSourceMenu();
+        });
+        menu.appendChild(item);
+      });
+    });
+    if (!visible) {
+      const empty=document.createElement('div');
+      empty.className='source-menu-empty';
+      empty.textContent=query ? '没有匹配的地图图层。' : '没有可用的地图来源。';
+      menu.appendChild(empty);
+    }
+  }
+  function closeSourceMenu() {
+    const button=document.getElementById('sourcePickerButton');
+    const menu=document.getElementById('sourceMenu');
+    if (button) button.setAttribute('aria-expanded','false');
+    if (menu) menu.classList.remove('open','open-up');
+  }
+  function toggleSourceMenu() {
+    const button=document.getElementById('sourcePickerButton');
+    const menu=document.getElementById('sourceMenu');
+    if (!button || !menu) return;
+    const opening=button.getAttribute('aria-expanded') !== 'true';
+    if (!opening) { closeSourceMenu(); return; }
+    button.setAttribute('aria-expanded','true');
+    menu.classList.add('open');
+    requestAnimationFrame(() => {
+      menu.classList.toggle('open-up', button.getBoundingClientRect().bottom + menu.offsetHeight > window.innerHeight - 12);
+      const search=document.getElementById('sourceSearch');
+      if (search) search.focus();
+    });
+  }
+  function updateSourceMeta() {
+    const source = sourceDefinitions.get(activeSource);
+    const warning = document.getElementById('sourceWarning');
+    const edit = document.getElementById('editSourceButton');
+    const remove = document.getElementById('removeSourceButton');
+    const custom = !!(source && source.custom);
+    if (warning) {
+      const gcj02 = !!(source && String(source.attribution).includes('GCJ-02'));
+      const needsGcj = gcj02 && coordinateMode !== 'gcj02';
+      const needsBd = !!(source && String(source.attribution).includes('BD-09')) && coordinateMode !== 'bd09';
+      warning.textContent = needsGcj ? '当前为 GCJ-02 底图。请将“显示坐标”切换为“适配高德 / 腾讯”，以减小 WGS84 几何偏移。' : needsBd ? '当前为 BD-09 底图。请将“显示坐标”切换为“适配百度”，以减小 WGS84 几何偏移。' : '';
+      warning.classList.toggle('visible', needsGcj || needsBd);
+    }
+    if (edit) edit.disabled = !custom;
+    if (remove) remove.disabled = !custom;
+  }
   function setDefaultSource(name) { if (!layers[name]) return; defaultSource=name; updateSourceLabels(); }
   function updateTileNotice() {
     const notice = document.getElementById('mapNotice');
+    const retry = document.getElementById('retrySourceButton');
     const health = layerHealth[activeSource];
-    if (!notice || !health || health.errors === 0) { if (notice) notice.textContent = ''; return; }
-    notice.textContent = ' · ' + health.errors + ' tile errors (network/source)';
+    if (!notice || !health || health.errors === 0) {
+      if (notice) notice.textContent = '';
+      if (retry) retry.classList.remove('visible');
+      return;
+    }
+    if (health.message) notice.textContent = ' · ' + health.message;
+    else notice.textContent = ' · ' + health.errors + ' 个瓦片加载失败';
+    if (retry) retry.classList.add('visible');
+  }
+  function retryActiveSource() {
+    const layer = layers[activeSource];
+    const health = layerHealth[activeSource];
+    if (!layer || !health) return;
+    health.errors = 0;
+    health.retries = 0;
+    health.message = '';
+    if (layer.redraw) layer.redraw();
+    updateTileNotice();
   }
   function setStyle(feature, selectedFlag) {
     if (feature.setStyle) feature.setStyle(selectedFlag ? selectedStyle : defaultStyle);
     else if (feature.eachLayer) feature.eachLayer(child => setStyle(child, selectedFlag));
-    if (feature.setIcon) feature.setOpacity(selectedFlag ? 1 : .78);
+    if (feature._geoPoint) { const element=feature.getElement && feature.getElement(); if (element) element.classList.toggle('selected', selectedFlag); feature.setOpacity(selectedFlag ? 1 : .82); }
+  }
+  function pointMarker(latlng) {
+    const icon=L.divIcon({ className:'geo-point-marker', iconSize:[18,18], iconAnchor:[9,9] });
+    const marker=L.marker(latlng, { icon, keyboard:true, riseOnHover:true });
+    marker._geoPoint=true;
+    return marker;
   }
   function parseCoordinate(text) {
     const values = text.trim().split(/\s+/).map(Number);
     if (values.length < 2 || !Number.isFinite(values[0]) || !Number.isFinite(values[1])) throw new Error('Invalid coordinate');
-    const coordinate = [values[1], values[0]];
-    return coordinate;
+    return transformCoordinate(values[1], values[0]);
+  }
+  function outsideChina(lat, lng) { return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271; }
+  function transformLatitude(lng, lat) { return -100 + 2 * lng + 3 * lat + .2 * lat * lat + .1 * lng * lat + .2 * Math.sqrt(Math.abs(lng)) + (20 * Math.sin(6 * lng * Math.PI) + 20 * Math.sin(2 * lng * Math.PI)) * 2 / 3 + (20 * Math.sin(lat * Math.PI) + 40 * Math.sin(lat / 3 * Math.PI)) * 2 / 3 + (160 * Math.sin(lat / 12 * Math.PI) + 320 * Math.sin(lat * Math.PI / 30)) * 2 / 3; }
+  function transformLongitude(lng, lat) { return 300 + lng + 2 * lat + .1 * lng * lng + .1 * lng * lat + .1 * Math.sqrt(Math.abs(lng)) + (20 * Math.sin(6 * lng * Math.PI) + 20 * Math.sin(2 * lng * Math.PI)) * 2 / 3 + (20 * Math.sin(lng * Math.PI) + 40 * Math.sin(lng / 3 * Math.PI)) * 2 / 3 + (150 * Math.sin(lng / 12 * Math.PI) + 300 * Math.sin(lng / 30 * Math.PI)) * 2 / 3; }
+  function wgs84ToGcj02(lat, lng) {
+    if (outsideChina(lat, lng)) return [lat, lng];
+    const earthRadius = 6378245, eccentricity = .00669342162296594323;
+    const deltaLat = transformLatitude(lng - 105, lat - 35);
+    const deltaLng = transformLongitude(lng - 105, lat - 35);
+    const radLat = lat / 180 * Math.PI;
+    const magic = 1 - eccentricity * Math.sin(radLat) * Math.sin(radLat);
+    const sqrtMagic = Math.sqrt(magic);
+    return [lat + deltaLat * 180 / ((earthRadius * (1 - eccentricity)) / (magic * sqrtMagic) * Math.PI), lng + deltaLng * 180 / (earthRadius / sqrtMagic * Math.cos(radLat) * Math.PI)];
+  }
+  function gcj02ToBd09(lat, lng) {
+    if (outsideChina(lat, lng)) return [lat, lng];
+    const x = lng, y = lat, distance = Math.sqrt(x * x + y * y) + .00002 * Math.sin(y * Math.PI * 3000 / 180), angle = Math.atan2(y, x) + .000003 * Math.cos(x * Math.PI * 3000 / 180);
+    return [distance * Math.sin(angle) + .006, distance * Math.cos(angle) + .0065];
+  }
+  function transformCoordinate(lat, lng) {
+    if (coordinateMode === 'gcj02') return wgs84ToGcj02(lat, lng);
+    if (coordinateMode === 'bd09') return gcj02ToBd09(...wgs84ToGcj02(lat, lng));
+    return [lat, lng];
   }
   function parseWktGroups(text) {
     let index = 0;
@@ -160,12 +506,12 @@
     if (/^empty$/i.test(body)) throw new Error('Empty geometry');
     const groups = parseWktGroups(body);
     let layer;
-    if (type === 'POINT') layer = L.circleMarker(groups[0], { radius:6, color:defaultStyle.color, weight:2, fillColor:defaultStyle.fillColor, fillOpacity:.75 });
+    if (type === 'POINT') layer = pointMarker(groups[0]);
     else if (type === 'LINESTRING') layer = L.polyline(groups, defaultStyle);
     else if (type === 'POLYGON') layer = L.polygon(groups, defaultStyle);
     else if (type === 'MULTILINESTRING') layer = L.featureGroup(groups.map(line => L.polyline(line, defaultStyle)));
     else if (type === 'MULTIPOLYGON') layer = L.featureGroup(groups.map(polygon => L.polygon(polygon, defaultStyle)));
-    else if (type === 'MULTIPOINT') layer = L.featureGroup(groups.map(point => L.circleMarker(point[0] || point, { radius:6, color:defaultStyle.color, weight:2, fillColor:defaultStyle.fillColor, fillOpacity:.75 })));
+    else if (type === 'MULTIPOINT') layer = L.featureGroup(groups.map(point => pointMarker(point[0] || point)));
     else throw new Error('Unsupported geometry type: ' + type);
     return layer;
   }
@@ -192,13 +538,21 @@
     }
   }
   function loadFeatures(payload) {
+    lastPayload = payload;
     clearFeatures(); const bounds=[]; const items=payload.features || [];
     items.forEach(item => { addWkt(item.wkt, item.row, item.attributes); const f=features.get(item.row); if(f && f.getBounds) bounds.push(f.getBounds()); else if(f && f.getLatLng) bounds.push(L.latLngBounds([f.getLatLng(),f.getLatLng()])); });
-    document.getElementById('count').textContent = features.size; document.getElementById('geometry').textContent = payload.geometryColumn || 'geometry';
-    const toolbarGeometry = document.getElementById('toolbarGeometry'); if (toolbarGeometry) toolbarGeometry.textContent = payload.geometryColumn || 'geometry';
+    document.getElementById('count').textContent = features.size; document.getElementById('geometry').textContent = payload.geometryColumn || '几何列';
+    const dataNotice = document.getElementById('dataNotice');
+    if (dataNotice) {
+      const notices=[];
+      if (payload.truncatedRows) notices.push('显示前 '+(payload.visibleRows-payload.truncatedRows)+' / '+payload.visibleRows+' 行');
+      if (payload.skippedRows) notices.push('已跳过 '+payload.skippedRows+' 行不支持或为空的数据');
+      dataNotice.textContent=notices.length ? ' · '+notices.join('; ') : '';
+    }
+    const toolbarGeometry = document.getElementById('toolbarGeometry'); if (toolbarGeometry) toolbarGeometry.textContent = payload.geometryColumn || '几何列';
     if(bounds.length) { const group=L.featureGroup(bounds.map(b=>L.rectangle(b,{opacity:0,fillOpacity:0}))); map.fitBounds(group.getBounds().pad(.12), { animate:false }); }
   }
-  window.geoPlus = { addSource:addSourceFromJava, switchSource, loadFeatures, focusRows, setDefaultSource };
+  window.geoPlus = { addSources:addSourcesFromJava, addSource:addSourceFromJava, removeSource, switchSource, loadFeatures, focusRows, setDefaultSource };
   function updateZoomLabel() {
     const zoom = document.getElementById('zoom');
     if (zoom) zoom.textContent = 'Z=' + map.getZoom();
@@ -207,7 +561,28 @@
   updateZoomLabel();
   const sourceSelect = document.getElementById('sourceSelect');
   if (sourceSelect) sourceSelect.addEventListener('change', () => {
+    updateSourcePickerValue();
+    renderSourceMenu();
     if (window.dg && window.dg.changeSource) window.dg.changeSource(sourceSelect.value);
+  });
+  const sourcePickerButton = document.getElementById('sourcePickerButton');
+  if (sourcePickerButton) sourcePickerButton.addEventListener('click', toggleSourceMenu);
+  const sourceSearch = document.getElementById('sourceSearch');
+  if (sourceSearch) sourceSearch.addEventListener('input', renderSourceMenu);
+  const coordinateModeSelect = document.getElementById('coordinateMode');
+  if (coordinateModeSelect) {
+    coordinateModeSelect.value = ['wgs84', 'gcj02', 'bd09'].includes(coordinateMode) ? coordinateMode : 'wgs84';
+    coordinateMode = coordinateModeSelect.value;
+    coordinateModeSelect.addEventListener('change', () => {
+      coordinateMode = coordinateModeSelect.value;
+      window.localStorage.setItem('geoPlus.coordinateMode', coordinateMode);
+      if (lastPayload) loadFeatures(lastPayload);
+      updateSourceMeta();
+    });
+  }
+  document.addEventListener('click', event => {
+    const picker=document.getElementById('sourcePicker');
+    if (picker && !picker.contains(event.target)) closeSourceMenu();
   });
   const addSourceButton = document.getElementById('addSourceButton');
   if (addSourceButton) addSourceButton.addEventListener('click', () => {
@@ -217,11 +592,23 @@
   if (defaultSourceButton) defaultSourceButton.addEventListener('click', () => {
     if (window.dg && window.dg.setDefaultSource && sourceSelect) window.dg.setDefaultSource(sourceSelect.value);
   });
+  const editSourceButton = document.getElementById('editSourceButton');
+  if (editSourceButton) editSourceButton.addEventListener('click', () => {
+    if (window.dg && window.dg.editMapSource && sourceSelect) window.dg.editMapSource(sourceSelect.value);
+  });
+  const removeSourceButton = document.getElementById('removeSourceButton');
+  if (removeSourceButton) removeSourceButton.addEventListener('click', () => {
+    if (window.dg && window.dg.removeMapSource && sourceSelect) window.dg.removeMapSource(sourceSelect.value);
+  });
+  const retrySourceButton = document.getElementById('retrySourceButton');
+  if (retrySourceButton) retrySourceButton.addEventListener('click', retryActiveSource);
+  const refreshDataButton = document.getElementById('refreshDataButton');
+  if (refreshDataButton) refreshDataButton.addEventListener('click', () => { if (window.dg && window.dg.refreshMap) window.dg.refreshMap(); });
   const floatingToolbar = document.getElementById('floatingToolbar');
   const toolbarToggle = document.getElementById('toolbarToggle');
   if (floatingToolbar && toolbarToggle) {
     const savedCollapsed = window.localStorage.getItem('geoPlus.toolbarCollapsed');
-    const setToolbarState = collapsed => { floatingToolbar.classList.toggle('collapsed', collapsed); toolbarToggle.setAttribute('aria-expanded', String(!collapsed)); window.localStorage.setItem('geoPlus.toolbarCollapsed', String(collapsed)); };
+    const setToolbarState = collapsed => { floatingToolbar.classList.toggle('collapsed', collapsed); toolbarToggle.setAttribute('aria-expanded', String(!collapsed)); toolbarToggle.setAttribute('aria-label', collapsed ? 'Expand map controls' : 'Collapse map controls'); toolbarToggle.title = collapsed ? 'Expand map controls' : 'Collapse map controls'; window.localStorage.setItem('geoPlus.toolbarCollapsed', String(collapsed)); };
     if (savedCollapsed !== null) setToolbarState(savedCollapsed === 'true');
     toolbarToggle.addEventListener('click', () => setToolbarState(!floatingToolbar.classList.contains('collapsed')));
   }

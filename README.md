@@ -9,10 +9,13 @@ Java package: `cn.duqimeng.geoviewerplus`
 
 - Uses DataGrip's live `DataGrid` context: clicking the action from a table editor or query result opens the current visible result set automatically.
 - Own JCEF + Leaflet renderer and own result-set-to-WKT extraction; it does not open or reuse DataGrip's Geo Viewer content.
-- Built-in basemap switcher with OSM Standard, OSM Humanitarian, OpenTopoMap, Esri imagery, AMap road/imagery variants and Tencent templates.
-- `+ Add map` accepts custom XYZ/TMS tile templates, subdomains and attribution for internal, private, AMap or other compatible services.
+- Built-in basemap switcher with OSM Standard, OSM Humanitarian, OpenTopoMap, OpenFreeMap's keyless open-source vector tiles (updated weekly), Esri World Imagery (when ArcGIS Online is reachable), plus AMap road/imagery and a Tencent compatibility source. Domestic sources are explicitly marked GCJ-02.
+- A display-only coordinate selector converts WGS84 result geometries to GCJ-02 for AMap/Tencent or BD-09 for Baidu. Conversion happens locally in the browser, is limited to mainland-China coordinates, and never writes to or changes the database value.
+- `+ Add map` accepts HTTPS XYZ/TMS and MVT tile templates, subdomains and attribution. HTTPS protects database-result location privacy when tiles are requested.
 - Bidirectional selection: selecting a grid row focuses and highlights its geometry; clicking a geometry selects and scrolls to the corresponding grid row.
-- Collapsible floating map controls, persistent default basemap selection, tile-load retry feedback and real XYZ zoom level display.
+- **Refresh result data** re-reads the active grid after a query rerun, edit, filter, or sort.
+- Collapsible floating map controls, persistent default basemap selection, tile-load retry feedback, actual XYZ zoom level display, and clear feedback when rows are skipped or the 500-row map limit applies.
+- EPSG:4326, EPSG:4979, EPSG:4490/CGCS2000, and EPSG:3857 geometry values are rendered in WGS84; unknown coordinate reference systems are skipped rather than plotted incorrectly.
 - Compact feature inspector for point, line and polygon data.
 - Tools > Open Geo Viewer Plus, the main toolbar, and the result-grid toolbars.
 - A map icon in the main DataGrip toolbar that opens the viewer directly.
@@ -57,7 +60,7 @@ Keep Marketplace screenshots in `docs/media/<version>/`. The Marketplace Media s
 
 Use `-Bump minor` for a backward-compatible feature group or `-Bump major` for a breaking release. The script checks for a clean worktree, increments `pluginVersion`, runs `publishPlugin`, commits the release, and pushes the Git tag. The token is never stored in the repository.
 
-After installing the updated ZIP, restart DataGrip (or use **File > Invalidate Caches / Restart** if the old action is still cached). The map icon is added to the main toolbar; it can also be found under **Tools > Open Geo Viewer Plus**. The viewer is placed below the current result panel.
+Install the ZIP from **Settings | Plugins | ⚙ | Install Plugin from Disk…**. Geo Viewer Plus declares dynamic-plugin support, so DataGrip can normally enable or update it immediately without restarting. If an older viewer is open or the IDE reports that unloading failed, close its Geo Viewer Plus tab and retry; restart only when DataGrip explicitly requests it. The map icon is added to the main toolbar and **Tools | Open Geo Viewer Plus**.
 
 ## Next integration seam
 
