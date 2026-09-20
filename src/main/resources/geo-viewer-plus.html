@@ -38,11 +38,12 @@
     .map-notice { color:#fbbf24; }
     .map-retry-button { display:none; pointer-events:auto; min-height:26px; padding:3px 8px; border:1px solid rgba(251,191,36,.45); border-radius:7px; background:rgba(120,53,15,.7); color:#fde68a; cursor:pointer; }
     .map-retry-button.visible { display:inline-flex; }
-    .floating-toolbar { position:absolute; z-index:1000; top:16px; right:16px; width:min(366px, calc(100vw - 32px)); border:1px solid var(--panel-line); border-radius:20px; background:linear-gradient(155deg, rgba(13,27,48,.98), rgba(7,15,28,.97)); box-shadow:0 22px 60px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.025) inset; color:var(--panel-text); backdrop-filter:blur(22px); transition:width .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+    .floating-toolbar { position:absolute; z-index:1000; top:16px; right:16px; width:min(366px, calc(100vw - 32px)); border:1px solid var(--panel-line); border-radius:20px; background:linear-gradient(155deg, #0d1b30, #07101d); box-shadow:0 22px 60px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.025) inset; color:var(--panel-text); transition:border-color .16s ease, box-shadow .16s ease; }
     .floating-toolbar::before { content:''; position:absolute; top:-1px; left:30px; right:30px; height:1px; background:linear-gradient(90deg, transparent, rgba(125,183,255,.7), transparent); pointer-events:none; }
-    .floating-toolbar.collapsed { width:52px; border-color:transparent; background:transparent; box-shadow:none; backdrop-filter:none; }
+    .floating-toolbar.collapsed { width:52px; height:52px; overflow:hidden; border-color:transparent; background:transparent; box-shadow:none; }
     .toolbar-topbar { display:flex; align-items:center; justify-content:space-between; min-height:68px; padding:12px 13px 11px 15px; border-bottom:1px solid rgba(148,163,184,.13); }
     .collapsed .toolbar-topbar { min-height:52px; padding:0; border:0; }
+    .collapsed .toolbar-head-actions { width:52px; height:52px; }
     .toolbar-brand { display:flex; align-items:center; gap:10px; min-width:0; }
     .collapsed .toolbar-brand { display:none; }
     .toolbar-brand-mark { display:grid; flex:0 0 auto; width:32px; height:32px; place-items:center; border:1px solid rgba(125,183,255,.35); border-radius:10px; background:linear-gradient(145deg, rgba(59,130,246,.26), rgba(30,64,175,.2)); color:var(--panel-blue); box-shadow:0 7px 18px rgba(37,99,235,.18); }
@@ -72,10 +73,13 @@
     .toolbar-section-label::after { content:'BASE MAP'; color:#607894; font-size:8px; letter-spacing:.11em; }
     .toolbar-section-label.manage-label::after { content:'ACTIONS'; }
     .source-picker { position:relative; z-index:10; margin-bottom:9px; }
-    .coordinate-mode { display:flex; align-items:center; gap:8px; min-height:30px; margin:0 0 7px; padding:0 9px; border:1px solid rgba(148,163,184,.2); border-radius:8px; background:rgba(6,14,27,.44); color:#9db1ca; font-size:10px; }
+    .coordinate-mode { display:flex; align-items:center; gap:8px; min-height:30px; margin:0 0 5px; padding:0 9px; border:1px solid rgba(148,163,184,.2); border-radius:8px; background:rgba(6,14,27,.44); color:#9db1ca; font-size:10px; }
     .coordinate-mode span { flex:0 0 auto; }
     .coordinate-mode select { width:100%; min-width:0; border:0; outline:0; background:transparent; color:#e7eefb; font:inherit; cursor:pointer; }
     .coordinate-mode option { background:#10213a; color:#e7eefb; }
+    .coordinate-summary { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:23px; padding:0 2px; color:#7890ad; font-size:9px; }
+    .coordinate-summary strong { color:#b9d4f7; font-weight:700; }
+    .coordinate-summary span:last-child { overflow:hidden; color:#9ee8c5; font-weight:650; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
     .source-picker-button { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:48px; padding:0 12px; border:1px solid rgba(125,183,255,.3); border-radius:11px; background:linear-gradient(100deg, rgba(31,58,92,.95), rgba(22,42,70,.92)); color:#f6f9ff; outline:none; cursor:pointer; text-align:left; box-shadow:0 7px 18px rgba(0,0,0,.12); transition:border-color .18s ease, box-shadow .18s ease, background .18s ease; }
     .source-picker-button:hover, .source-picker-button[aria-expanded="true"] { border-color:var(--panel-blue); background:linear-gradient(100deg, rgba(36,71,112,.98), rgba(24,49,83,.96)); box-shadow:0 0 0 3px rgba(96,165,250,.12), 0 9px 22px rgba(0,0,0,.16); }
     .source-picker-leading { display:grid; flex:0 0 auto; width:25px; height:25px; margin-right:9px; place-items:center; border-radius:8px; background:rgba(125,183,255,.13); color:var(--panel-blue); }
@@ -93,12 +97,13 @@
     .source-search svg { flex:0 0 auto; width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
     .source-search input { width:100%; min-width:0; padding:0; border:0; outline:0; background:transparent; color:#e7eefb; font-size:11px; }
     .source-search input::placeholder { color:#607894; }
-    .source-menu-list { min-height:0; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#496581 transparent; }
+    .source-menu-list { min-width:0; min-height:0; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#496581 transparent; }
     .source-menu-list::-webkit-scrollbar { width:7px; }
     .source-menu-list::-webkit-scrollbar-track { background:transparent; }
     .source-menu-list::-webkit-scrollbar-thumb { background:#496581; border-radius:8px; }
     .source-menu-group { padding:7px 8px 4px; color:#6f87a4; font-size:9px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
-    .source-menu-option { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:36px; margin:2px 0; padding:0 9px; border:0; border-radius:8px; background:transparent; color:#cfe0f5; cursor:pointer; text-align:left; white-space:nowrap; transition:background .14s ease, color .14s ease; }
+    .source-menu-option { display:flex; align-items:center; justify-content:space-between; min-width:0; width:100%; min-height:36px; margin:2px 0; padding:0 9px; border:0; border-radius:8px; background:transparent; color:#cfe0f5; cursor:pointer; text-align:left; overflow:hidden; transition:background .14s ease, color .14s ease; }
+    .source-menu-option-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .source-menu-option::after { content:'›'; color:#5d7694; font-size:15px; opacity:0; transform:translateX(-3px); transition:opacity .14s ease, transform .14s ease; }
     .source-menu-option:hover, .source-menu-option[aria-selected="true"] { background:#1c3659; color:#f8fbff; }
     .source-menu-option:hover::after, .source-menu-option[aria-selected="true"]::after { opacity:1; transform:translateX(0); }
@@ -138,7 +143,8 @@
     .toolbar-brand-title { font-size:11px; }
     .toolbar-toggle { width:28px; height:28px; border-radius:8px; }
     .collapsed .toolbar-toggle { width:42px; height:42px; border-radius:11px; }
-    .floating-toolbar.collapsed { width:42px; }
+    .floating-toolbar.collapsed { width:42px; height:42px; }
+    .collapsed .toolbar-topbar, .collapsed .toolbar-head-actions { width:42px; height:42px; min-height:42px; }
     .toolbar-panel { padding:8px; }
     .toolbar-group, .toolbar-group.source-group { margin:0; padding:0; border:0; border-radius:0; background:transparent; }
     .source-picker { margin:0 0 7px; }
@@ -178,7 +184,7 @@
   <div class="toolbar-panel" id="toolbarPanel">
     <div class="floating-toolbar-head"><div><div class="floating-toolbar-title">Map controls</div><div class="floating-toolbar-subtitle">Choose a visual layer and keep it in sync with the result grid.</div></div><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
     <div class="toolbar-link-status"><span class="toolbar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.2-1.2"/></svg></span><span class="toolbar-link-copy"><span class="toolbar-link-title">Map and result grid linked</span><span class="toolbar-link-subtitle">Select a row or feature to focus the other view.</span></span></div>
-    <div class="toolbar-group source-group"><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="选择地图来源"><span class="source-picker-leading" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><span id="sourcePickerValue" class="source-picker-value">选择地图</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox" aria-label="地图来源"><div class="source-menu-head"><span>地图来源</span><span id="sourceMenuCount" class="source-menu-count"></span></div><label class="source-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><input id="sourceSearch" type="search" autocomplete="off" placeholder="筛选地图图层" aria-label="筛选地图图层"></label><div id="sourceMenuList" class="source-menu-list"></div></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div><label class="coordinate-mode" title="仅转换地图显示坐标；不会读取之外的数据，也不会修改数据库"><span>显示坐标</span><select id="coordinateMode" aria-label="显示坐标系"><option value="wgs84">原始 WGS84</option><option value="gcj02">适配高德 / 腾讯（GCJ-02）</option><option value="bd09">适配百度（BD-09）</option></select></label></div>
+    <div class="toolbar-group source-group"><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="选择地图来源"><span class="source-picker-leading" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><span id="sourcePickerValue" class="source-picker-value">选择地图</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox" aria-label="地图来源"><div class="source-menu-head"><span>地图来源</span><span id="sourceMenuCount" class="source-menu-count"></span></div><label class="source-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><input id="sourceSearch" type="search" autocomplete="off" placeholder="筛选地图图层" aria-label="筛选地图图层"></label><div id="sourceMenuList" class="source-menu-list"></div></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div><label class="coordinate-mode" title="声明空间数据原始使用的坐标系。插件会自动转换为当前地图需要的坐标系；原样叠加不会修改原始坐标数值，也不会修改数据库。"><span>坐标处理</span><select id="coordinateMode" aria-label="空间数据坐标处理"><option value="raw">原样叠加（不转换）</option><option value="wgs84">原始数据为 WGS84</option><option value="gcj02">原始数据为 GCJ-02</option><option value="bd09">原始数据为 BD-09</option></select></label><div class="coordinate-summary" role="status"><span>地图坐标：<strong id="mapCoordinateSystem">—</strong></span><span id="coordinateConversion">原样叠加（不转换）</span></div></div>
     <div class="toolbar-group"><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button" title="Set as default">Default</button><button id="addSourceButton" type="button" title="Add custom map">+ Map</button><button id="refreshDataButton" type="button" title="Refresh result data">Refresh</button></div><div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled title="Edit selected custom map">Edit</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled title="Remove selected custom map">Remove</button></div></div>
   </div>
 </div>
@@ -193,7 +199,7 @@
   let selected = [];
   let currentLayer = null;
   let activeSource = '';
-  let coordinateMode = window.localStorage.getItem('geoPlus.coordinateMode') || 'wgs84';
+  let coordinateMode = window.localStorage.getItem('geoPlus.dataCoordinateSystem') || 'raw';
   let lastPayload = null;
   let lastMapClickRow = -1;
   let lastMapClickAt = 0;
@@ -288,7 +294,7 @@
   }
   function addSourcesFromJava(sources) { (sources || []).map(normalizeBuiltinSource).forEach(source => addSource(source)); addSource(openFreeMapSource); updateSourceLabels(); }
   function addSourceFromJava(source, selectIt) { addSource(source); if (selectIt) { const select = document.getElementById('sourceSelect'); if (select) select.value = source.name; switchSource(source.name); } if (window.dg && window.dg.sourcesChanged) window.dg.sourcesChanged(Object.keys(layers)); }
-  function switchSource(name) { if (!sourceDefinitions.has(name)) return; if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name] || null; activeSource = name; const select = document.getElementById('sourceSelect'); if (select) { select.value = name; updateSourcePickerValue(); renderSourceMenu(); } if (currentLayer) currentLayer.addTo(map); updateSourceMeta(); updateTileNotice(); }
+  function switchSource(name) { if (!sourceDefinitions.has(name)) return; const previousMapCoordinateSystem=mapCoordinateSystem(); if (currentLayer) map.removeLayer(currentLayer); currentLayer = layers[name] || null; activeSource = name; const select = document.getElementById('sourceSelect'); if (select) { select.value = name; updateSourcePickerValue(); renderSourceMenu(); } if (currentLayer) currentLayer.addTo(map); if (lastPayload && coordinateMode !== 'raw' && previousMapCoordinateSystem !== mapCoordinateSystem()) rerenderFeaturesPreservingView(); updateSourceMeta(); updateTileNotice(); }
   function removeSource(name) {
     if (!sourceDefinitions.has(name)) return;
     const wasCurrent = activeSource === name;
@@ -312,6 +318,14 @@
     if (!group) { group = document.createElement('optgroup'); group.dataset.group = groupId; group.label = groupId === 'custom' ? '自定义地图' : '内置地图'; select.appendChild(group); }
     const option = document.createElement('option'); option.value = source.name; option.dataset.sourceName = source.name; option.textContent = source.name; group.appendChild(option); updateSourceLabels();
   }
+  function sourceDisplayName(sourceOrName) {
+    const name=typeof sourceOrName === 'string' ? sourceOrName : sourceOrName && sourceOrName.name;
+    return ({
+      '腾讯道路（兼容）':'腾讯道路',
+      'OpenFreeMap 开源矢量（每周更新）':'OpenFreeMap（矢量）',
+      'Esri World Imagery（需可访问 ArcGIS Online）':'Esri 卫星影像'
+    })[name] || name || '';
+  }
   function updateSourceLabels() {
     const select=document.getElementById('sourceSelect');
     if(!select) return;
@@ -326,7 +340,7 @@
     const value=document.getElementById('sourcePickerValue');
     if (!select || !value) return;
     const source=sourceDefinitions.get(select.value);
-    value.textContent=source ? (select.value === defaultSource ? '★ ' : '') + source.name : '选择地图';
+    value.textContent=source ? (select.value === defaultSource ? '★ ' : '') + sourceDisplayName(source) : '选择地图';
   }
   function renderSourceMenu() {
     const menu=document.getElementById('sourceMenuList');
@@ -356,7 +370,10 @@
         item.setAttribute('aria-selected', String(source.name === select.value));
         item.dataset.value=source.name;
         item.title=source.name;
-        item.textContent=(source.name === defaultSource ? '★ ' : '') + source.name;
+        const label=document.createElement('span');
+        label.className='source-menu-option-label';
+        label.textContent=(source.name === defaultSource ? '★ ' : '') + sourceDisplayName(source);
+        item.appendChild(label);
         item.addEventListener('click', () => {
           if (search) search.value='';
           select.value=source.name;
@@ -400,12 +417,13 @@
     const remove = document.getElementById('removeSourceButton');
     const custom = !!(source && source.custom);
     if (warning) {
-      const gcj02 = !!(source && String(source.attribution).includes('GCJ-02'));
-      const needsGcj = gcj02 && coordinateMode !== 'gcj02';
-      const needsBd = !!(source && String(source.attribution).includes('BD-09')) && coordinateMode !== 'bd09';
-      warning.textContent = needsGcj ? '当前为 GCJ-02 底图。请将“显示坐标”切换为“适配高德 / 腾讯”，以减小 WGS84 几何偏移。' : needsBd ? '当前为 BD-09 底图。请将“显示坐标”切换为“适配百度”，以减小 WGS84 几何偏移。' : '';
-      warning.classList.toggle('visible', needsGcj || needsBd);
+      const target = mapCoordinateSystem(source);
+      const needsDefinition = coordinateMode === 'raw' && target !== 'wgs84';
+      const targetLabel = target === 'gcj02' ? 'GCJ-02' : 'BD-09';
+      warning.textContent = needsDefinition ? '当前地图使用 '+targetLabel+'。原样叠加不会转换坐标；如数据有明确坐标系，请在“坐标处理”中选择对应项。' : '';
+      warning.classList.toggle('visible', needsDefinition);
     }
+    updateCoordinateSummary(source);
     if (edit) edit.disabled = !custom;
     if (remove) remove.disabled = !custom;
   }
@@ -467,10 +485,55 @@
     const x = lng, y = lat, distance = Math.sqrt(x * x + y * y) + .00002 * Math.sin(y * Math.PI * 3000 / 180), angle = Math.atan2(y, x) + .000003 * Math.cos(x * Math.PI * 3000 / 180);
     return [distance * Math.sin(angle) + .006, distance * Math.cos(angle) + .0065];
   }
+  function gcj02ToWgs84(lat, lng) {
+    if (outsideChina(lat, lng)) return [lat, lng];
+    let resultLat = lat, resultLng = lng;
+    for (let index = 0; index < 6; index++) {
+      const shifted = wgs84ToGcj02(resultLat, resultLng);
+      resultLat -= shifted[0] - lat;
+      resultLng -= shifted[1] - lng;
+    }
+    return [resultLat, resultLng];
+  }
+  function bd09ToGcj02(lat, lng) {
+    if (outsideChina(lat, lng)) return [lat, lng];
+    const x = lng - .0065, y = lat - .006;
+    const distance = Math.sqrt(x * x + y * y) - .00002 * Math.sin(y * Math.PI * 3000 / 180);
+    const angle = Math.atan2(y, x) - .000003 * Math.cos(x * Math.PI * 3000 / 180);
+    return [distance * Math.sin(angle), distance * Math.cos(angle)];
+  }
+  function mapCoordinateSystem(source) {
+    const definition = source || sourceDefinitions.get(activeSource);
+    const attribution = String(definition && definition.attribution || '').toUpperCase();
+    if (attribution.includes('BD-09')) return 'bd09';
+    if (attribution.includes('GCJ-02')) return 'gcj02';
+    return 'wgs84';
+  }
+  function coordinateSystemLabel(system) {
+    return ({ wgs84:'WGS84', gcj02:'GCJ-02', bd09:'BD-09' })[system] || '原始数值';
+  }
+  function updateCoordinateSummary(source) {
+    const target = mapCoordinateSystem(source);
+    const mapCoordinate = document.getElementById('mapCoordinateSystem');
+    const conversion = document.getElementById('coordinateConversion');
+    if (mapCoordinate) mapCoordinate.textContent = coordinateSystemLabel(target);
+    if (!conversion) return;
+    if (coordinateMode === 'raw') {
+      conversion.textContent = '原样叠加（不转换）';
+      return;
+    }
+    const input = coordinateSystemLabel(coordinateMode);
+    conversion.textContent = input === coordinateSystemLabel(target) ? input+' → '+coordinateSystemLabel(target)+'（无需转换）' : input+' → '+coordinateSystemLabel(target);
+  }
   function transformCoordinate(lat, lng) {
-    if (coordinateMode === 'gcj02') return wgs84ToGcj02(lat, lng);
-    if (coordinateMode === 'bd09') return gcj02ToBd09(...wgs84ToGcj02(lat, lng));
-    return [lat, lng];
+    if (coordinateMode === 'raw') return [lat, lng];
+    let wgs84 = [lat, lng];
+    if (coordinateMode === 'gcj02') wgs84 = gcj02ToWgs84(lat, lng);
+    else if (coordinateMode === 'bd09') wgs84 = gcj02ToWgs84(...bd09ToGcj02(lat, lng));
+    const target = mapCoordinateSystem();
+    if (target === 'gcj02') return wgs84ToGcj02(...wgs84);
+    if (target === 'bd09') return gcj02ToBd09(...wgs84ToGcj02(...wgs84));
+    return wgs84;
   }
   function parseWktGroups(text) {
     let index = 0;
@@ -519,12 +582,12 @@
   function addWkt(wkt, row, attributes) {
     try {
       const object = parseWkt(wkt);
-      object.addTo(map); features.set(row, object); setStyle(object, false);
+      object._geoRow=Number(row); object.addTo(map); features.set(row, object); setStyle(object, false);
       const type = (String(wkt).match(/(?:srid=\d+;)?\s*([a-z]+)/i) || [,'geometry'])[1].toUpperCase();
       const rows = attributes.filter(a => a[1] !== '' && a[1] !== 'null').map(a => '<div class="feature-row"><span class="feature-key">'+esc(a[0])+'</span><span class="feature-value">'+esc(a[1])+'</span></div>').join('');
       const html = '<div class="feature-popup"><div class="feature-popup-head"><span>Row '+(Number(row)+1)+'</span><span class="feature-popup-type">'+esc(type)+'</span></div><div class="feature-popup-grid">'+rows+'</div></div>';
       const click = () => { const now = Date.now(); if (lastMapClickRow === Number(row) && now - lastMapClickAt < 120) return; lastMapClickRow = Number(row); lastMapClickAt = now; focusRows([row], true); if (window.dg && window.dg.selectInTable) window.dg.selectInTable(String(row)); };
-      object.bindPopup(html, { autoPan:false, maxWidth:360, closeButton:true }); object.on('click', click); if (object.eachLayer) object.eachLayer(child => child.on('click', click));
+      object.bindPopup(html, { autoPan:false, maxWidth:360, closeButton:true }); object.on('click', click); if (object.eachLayer) object.eachLayer(child => { child._geoRow=Number(row); child.on('click', click); });
     } catch (e) { console.warn('Geo Viewer Plus could not parse row '+row, e); }
   }
   function focusRows(rows, openPopup) {
@@ -537,10 +600,14 @@
       if (openPopup && f && f.openPopup) f.openPopup();
     }
   }
-  function loadFeatures(payload) {
-    lastPayload = payload;
+  function renderFeatures(payload, fitView) {
+    const selectedRows=[...selected];
+    const popupSource=map._popup && map._popup._source;
+    const popupRow=popupSource && Number.isFinite(Number(popupSource._geoRow)) ? Number(popupSource._geoRow) : null;
     clearFeatures(); const bounds=[]; const items=payload.features || [];
     items.forEach(item => { addWkt(item.wkt, item.row, item.attributes); const f=features.get(item.row); if(f && f.getBounds) bounds.push(f.getBounds()); else if(f && f.getLatLng) bounds.push(L.latLngBounds([f.getLatLng(),f.getLatLng()])); });
+    selected=selectedRows.filter(row => features.has(row));
+    selected.forEach(row => setStyle(features.get(row), true));
     document.getElementById('count').textContent = features.size; document.getElementById('geometry').textContent = payload.geometryColumn || '几何列';
     const dataNotice = document.getElementById('dataNotice');
     if (dataNotice) {
@@ -550,7 +617,13 @@
       dataNotice.textContent=notices.length ? ' · '+notices.join('; ') : '';
     }
     const toolbarGeometry = document.getElementById('toolbarGeometry'); if (toolbarGeometry) toolbarGeometry.textContent = payload.geometryColumn || '几何列';
-    if(bounds.length) { const group=L.featureGroup(bounds.map(b=>L.rectangle(b,{opacity:0,fillOpacity:0}))); map.fitBounds(group.getBounds().pad(.12), { animate:false }); }
+    if(fitView && bounds.length) { const group=L.featureGroup(bounds.map(b=>L.rectangle(b,{opacity:0,fillOpacity:0}))); map.fitBounds(group.getBounds().pad(.12), { animate:false }); }
+    if (popupRow !== null) { const popupFeature=features.get(popupRow); if (popupFeature && popupFeature.openPopup) popupFeature.openPopup(); }
+  }
+  function rerenderFeaturesPreservingView() { if (lastPayload) renderFeatures(lastPayload, false); }
+  function loadFeatures(payload) {
+    lastPayload = payload;
+    renderFeatures(payload, true);
   }
   window.geoPlus = { addSources:addSourcesFromJava, addSource:addSourceFromJava, removeSource, switchSource, loadFeatures, focusRows, setDefaultSource };
   function updateZoomLabel() {
@@ -571,12 +644,13 @@
   if (sourceSearch) sourceSearch.addEventListener('input', renderSourceMenu);
   const coordinateModeSelect = document.getElementById('coordinateMode');
   if (coordinateModeSelect) {
-    coordinateModeSelect.value = ['wgs84', 'gcj02', 'bd09'].includes(coordinateMode) ? coordinateMode : 'wgs84';
+    coordinateModeSelect.value = ['raw', 'wgs84', 'gcj02', 'bd09'].includes(coordinateMode) ? coordinateMode : 'raw';
     coordinateMode = coordinateModeSelect.value;
+    updateSourceMeta();
     coordinateModeSelect.addEventListener('change', () => {
       coordinateMode = coordinateModeSelect.value;
-      window.localStorage.setItem('geoPlus.coordinateMode', coordinateMode);
-      if (lastPayload) loadFeatures(lastPayload);
+      window.localStorage.setItem('geoPlus.dataCoordinateSystem', coordinateMode);
+      rerenderFeaturesPreservingView();
       updateSourceMeta();
     });
   }
@@ -608,7 +682,7 @@
   const toolbarToggle = document.getElementById('toolbarToggle');
   if (floatingToolbar && toolbarToggle) {
     const savedCollapsed = window.localStorage.getItem('geoPlus.toolbarCollapsed');
-    const setToolbarState = collapsed => { floatingToolbar.classList.toggle('collapsed', collapsed); toolbarToggle.setAttribute('aria-expanded', String(!collapsed)); toolbarToggle.setAttribute('aria-label', collapsed ? 'Expand map controls' : 'Collapse map controls'); toolbarToggle.title = collapsed ? 'Expand map controls' : 'Collapse map controls'; window.localStorage.setItem('geoPlus.toolbarCollapsed', String(collapsed)); };
+    const setToolbarState = collapsed => { if (collapsed) closeSourceMenu(); floatingToolbar.classList.toggle('collapsed', collapsed); toolbarToggle.setAttribute('aria-expanded', String(!collapsed)); toolbarToggle.setAttribute('aria-label', collapsed ? 'Expand map controls' : 'Collapse map controls'); toolbarToggle.title = collapsed ? 'Expand map controls' : 'Collapse map controls'; window.localStorage.setItem('geoPlus.toolbarCollapsed', String(collapsed)); requestAnimationFrame(() => map.invalidateSize({ pan:false })); };
     if (savedCollapsed !== null) setToolbarState(savedCollapsed === 'true');
     toolbarToggle.addEventListener('click', () => setToolbarState(!floatingToolbar.classList.contains('collapsed')));
   }
