@@ -11,10 +11,10 @@ Java package: `cn.duqimeng.geoviewerplus`
 - Own JCEF + Leaflet renderer and own result-set-to-WKT extraction; it does not open or reuse DataGrip's Geo Viewer content.
 - Built-in basemap switcher with OSM Standard, OSM Humanitarian, OpenTopoMap, OpenFreeMap's keyless open-source vector tiles (updated weekly), Esri World Imagery (when ArcGIS Online is reachable), plus AMap road/imagery and a Tencent compatibility source. Domestic sources are explicitly marked GCJ-02.
 - A display-only coordinate selector converts WGS84 result geometries to GCJ-02 for AMap/Tencent or BD-09 for Baidu. Conversion happens locally in the browser, is limited to mainland-China coordinates, and never writes to or changes the database value.
-- `+ Add map` accepts HTTPS XYZ/TMS and MVT tile templates, subdomains and attribution. HTTPS protects database-result location privacy when tiles are requested.
+- `+ Add map` accepts XYZ/TMS and MVT tile templates, subdomains and attribution. Tile requests are sent directly to the configured provider; choose sources you are permitted to access and whose privacy policy you accept.
 - Bidirectional selection: selecting a grid row focuses and highlights its geometry; clicking a geometry selects and scrolls to the corresponding grid row.
 - **Refresh result data** re-reads the active grid after a query rerun, edit, filter, or sort.
-- Collapsible floating map controls, persistent default basemap selection, tile-load retry feedback, actual XYZ zoom level display, and clear feedback when rows are skipped or the 500-row map limit applies.
+- Collapsible floating map controls, persistent default basemap selection, tile-load retry feedback, actual XYZ zoom level display, geometry-column selection, and clear feedback when rows are skipped or cannot be rendered.
 - EPSG:4326, EPSG:4979, EPSG:4490/CGCS2000, and EPSG:3857 geometry values are rendered in WGS84; unknown coordinate reference systems are skipped rather than plotted incorrectly.
 - Compact feature inspector for point, line and polygon data.
 - Tools > Open Geo Viewer Plus, the main toolbar, and the result-grid toolbars.
@@ -22,11 +22,11 @@ Java package: `cn.duqimeng.geoviewerplus`
 
 ## Build
 
-The build expects a local Gradle distribution and IntelliJ/DataGrip SDK. Keep those files outside the repository. DataGrip 2026.1's bundled JBR (Java 25) is needed to read the SDK, while Gradle itself can run on Java 17:
+The build expects a local Gradle distribution and a local DataGrip SDK. Keep both outside the repository. It compiles against the 2025.1 baseline (build 251) with Java 21 and declares compatibility through build 262. The default SDK location is `tools/datagrip-sdk`; use `dataGripSdkPath` to verify another installed SDK:
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
-& '.\tools\gradle-8.10.2\bin\gradle.bat' buildPlugin --no-daemon
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
+& '.\tools\gradle-8.10.2\bin\gradle.bat' verifyPlugin buildPlugin --no-daemon
 ```
 
 The installable ZIP is written to `build/distributions/geo-viewer-plus-<version>.zip`.

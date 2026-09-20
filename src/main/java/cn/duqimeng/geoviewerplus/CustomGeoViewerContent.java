@@ -38,6 +38,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -53,7 +54,6 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,6 +73,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private final JBCefBrowser browser;
     private final CefLoadHandler loadHandler;
     private final JBCefJSQuery selectQuery;
+    private final JBCefJSQuery geometryColumnQuery;
     private final JBCefJSQuery readyQuery;
     private final JBCefJSQuery sourceQuery;
     private final JBCefJSQuery addSourceQuery;
@@ -89,10 +90,11 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private String lastVisibleRowsKey = "";
     private String selectedSourceName = "";
     private String defaultSourceName = "";
+    private String selectedGeometryColumnId = "";
 
     private CustomGeoViewerContent(DataGrid grid) {
         this.grid = grid;
-        this.payload = payload(GeoDataExtractor.extract(grid, 500));
+        this.payload = payload(GeoDataExtractor.extract(grid, selectedGeometryColumnId));
         this.browser = new JBCefBrowser();
         this.loadHandler = new CefLoadHandlerAdapter() {
             @Override
@@ -106,6 +108,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         };
         browser.getJBCefClient().addLoadHandler(loadHandler, browser.getCefBrowser());
         this.selectQuery = JBCefJSQuery.create(browser);
+        this.geometryColumnQuery = JBCefJSQuery.create(browser);
         this.readyQuery = JBCefJSQuery.create(browser);
         this.sourceQuery = JBCefJSQuery.create(browser);
         this.addSourceQuery = JBCefJSQuery.create(browser);
@@ -152,6 +155,13 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                 }, ModalityState.any());
             } catch (NumberFormatException ignored) {
             }
+            return new JBCefJSQuery.Response("");
+        });
+        geometryColumnQuery.addHandler(columnId -> {
+            SwingUtilities.invokeLater(() -> {
+                selectedGeometryColumnId = columnId;
+                reload();
+            });
             return new JBCefJSQuery.Response("");
         });
         readyQuery.addHandler(ignored -> {
@@ -317,22 +327,22 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     private MapSource showMapSourceDialog(MapSource initial) {
-        JTextField name = new JTextField(initial == null ? "My map" : initial.name(), 42);
-        JTextField url = new JTextField(initial == null ? "https://{s}.example.com/{z}/{x}/{y}.png" : initial.template(), 42);
-        JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution(), 42);
-        JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains(), 42);
+        JTextField name = new JTextField(initial == null ? "My map" : initial.name(), 52);
+        JTextField url = new JTextField(initial == null ? "https://{s}.example.com/{z}/{x}/{y}.png" : initial.template(), 52);
+        JTextField attribution = new JTextField(initial == null ? "Map data contributors" : initial.attribution(), 52);
+        JTextField subdomains = new JTextField(initial == null ? "abc" : initial.subdomains(), 52);
         JCheckBox tms = new JCheckBox("TMS Y axis (invert tile row)", initial != null && initial.tms());
         JComboBox<MapSourceType> type = new JComboBox<>(MapSourceType.values());
-        JTextField vectorLayer = new JTextField(initial == null ? "sliced" : initial.vectorLayer(), 42);
+        JTextField vectorLayer = new JTextField(initial == null ? "sliced" : initial.vectorLayer(), 52);
         if (initial != null) type.setSelectedItem(initial.type());
         JBLabel vectorLayerLabel = new JBLabel("MVT layer names");
         JPanel fields = new JPanel(new GridBagLayout());
-        fields.setBorder(JBUI.Borders.empty(8, 12, 4, 12));
-        fields.setPreferredSize(new Dimension(620, 390));
+        fields.setBorder(JBUI.Borders.empty(12, 16, 8, 16));
+        fields.setPreferredSize(new Dimension(760, 0));
         int row = 0;
         row = addFormRow(fields, row, "Name", name, "Shown in the map source menu.");
         row = addFormRow(fields, row, "Source type", type, "Raster sources use XYZ/TMS tiles; MVT sources use protobuf vector tiles.");
-        row = addFormRow(fields, row, "Tile URL template", url, "Use {z}, {x}, {y}; add {s} when the server uses subdomains.");
+        row = addFormRow(fields, row, "Tile URL template", url, "Use {z}, {x}, {y}; add {s} when the server uses subdomains. The template is used as entered.");
         row = addFormRow(fields, row, "Attribution", attribution, "Keep the provider credit visible on the map.");
         row = addFormRow(fields, row, "Subdomains", subdomains, "For {s}, for example abc or 0123. Leave blank when unused.");
         row = addFormRow(fields, row, vectorLayerLabel, vectorLayer, "For MVT, enter names such as roads, water, landuse; comma-separate multiple names.");
@@ -357,8 +367,16 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         JDialog dialog = new JDialog(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         JPanel root = new JPanel(new BorderLayout(0, 8));
-        root.setBorder(JBUI.Borders.empty(8));
-        root.add(fields, BorderLayout.CENTER);
+        root.setBorder(JBUI.Borders.empty(10));
+        JBLabel privacyNote = new JBLabel("Tile requests are sent directly to this address. Use a source you are permitted to access.");
+        privacyNote.setForeground(JBColor.GRAY);
+        privacyNote.setBorder(JBUI.Borders.empty(0, 6, 4, 6));
+        root.add(privacyNote, BorderLayout.NORTH);
+        JBScrollPane formScrollPane = new JBScrollPane(fields);
+        formScrollPane.setBorder(JBUI.Borders.empty());
+        formScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        formScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        root.add(formScrollPane, BorderLayout.CENTER);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         JButton cancel = new JButton("Cancel");
@@ -387,9 +405,10 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
             dialog.dispose();
         });
         dialog.getRootPane().setDefaultButton(save);
-        dialog.setResizable(false);
+        dialog.setResizable(true);
         dialog.pack();
-        dialog.setMinimumSize(new Dimension(680, 500));
+        dialog.setMinimumSize(new Dimension(780, 560));
+        dialog.setSize(new Dimension(820, 620));
         dialog.setLocationRelativeTo(owner);
         dialog.setVisible(true);
         return result[0];
@@ -428,6 +447,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                 .replace("__LEAFLET_JS__", readResource("/leaflet.js"))
                 .replace("__LEAFLET_VECTORGRID_JS__", readResource("/leaflet-vectorgrid.js"));
         String query = selectQuery.inject("String(row)");
+        String geometryColumn = geometryColumnQuery.inject("String(columnId)");
         String ready = readyQuery.inject("ready");
         String source = sourceQuery.inject("String(name)");
         String addSource = addSourceQuery.inject("open");
@@ -435,7 +455,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         String removeSource = removeSourceQuery.inject("String(name)");
         String defaultSource = defaultSourceQuery.inject("String(name)");
         String reload = reloadQuery.inject("refresh");
-        String bootstrap = "<script>window.dg=window.dg||{};window.dg.selectInTable=function(row){" + query + "};window.dg.changeSource=function(name){" + source + "};window.dg.addMapSource=function(){" + addSource + "};window.dg.editMapSource=function(name){" + editSource + "};window.dg.removeMapSource=function(name){" + removeSource + "};window.dg.setDefaultSource=function(name){" + defaultSource + "};window.dg.refreshMap=function(){" + reload + "};</script>";
+        String bootstrap = "<script>window.dg=window.dg||{};window.dg.selectInTable=function(row){" + query + "};window.dg.changeGeometryColumn=function(columnId){" + geometryColumn + "};window.dg.changeSource=function(name){" + source + "};window.dg.addMapSource=function(){" + addSource + "};window.dg.editMapSource=function(name){" + editSource + "};window.dg.removeMapSource=function(name){" + removeSource + "};window.dg.setDefaultSource=function(name){" + defaultSource + "};window.dg.refreshMap=function(){" + reload + "};</script>";
         html = html.replace("__GEO_VIEWER_READY__", ready);
         browser.loadHTML(html.replace("</body>", bootstrap + "</body>"), "https://geo-viewer-plus.local/");
     }
@@ -451,7 +471,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private void reload() {
         lastSelectionKey = "";
-        payload = payload(GeoDataExtractor.extract(grid, 500));
+        payload = payload(GeoDataExtractor.extract(grid, selectedGeometryColumnId));
         lastVisibleRowsKey = visibleRowsKey();
         browser.runJavaScript("window.geoPlus && window.geoPlus.loadFeatures(" + payload + ");");
     }
@@ -544,8 +564,15 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private static String payload(GeoDataExtractor.Snapshot snapshot) {
         StringBuilder out = new StringBuilder("{\"geometryColumn\":").append(quote(snapshot.geometryColumn()))
+                .append(",\"geometryColumnId\":").append(quote(snapshot.geometryColumnId()))
+                .append(",\"geometryColumns\":[");
+        for (int i = 0; i < snapshot.geometryColumns().size(); i++) {
+            if (i > 0) out.append(',');
+            GeoDataExtractor.GeometryColumnInfo column = snapshot.geometryColumns().get(i);
+            out.append("{\"id\":").append(quote(column.id())).append(",\"name\":").append(quote(column.name())).append('}');
+        }
+        out.append(']')
                 .append(",\"visibleRows\":").append(snapshot.visibleRows())
-                .append(",\"truncatedRows\":").append(snapshot.truncatedRows())
                 .append(",\"skippedRows\":").append(snapshot.skippedRows())
                 .append(",\"features\":[");
         for (int i = 0; i < snapshot.features().size(); i++) {
@@ -597,13 +624,6 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         if (!template.contains("{z}") || !template.contains("{x}") || !template.contains("{y}")) {
             return "Tile URL template must contain {z}, {x}, and {y}.";
         }
-        try {
-            String probe = template.replace("{s}", "a").replace("{z}", "0").replace("{x}", "0").replace("{y}", "0");
-            String scheme = URI.create(probe).getScheme();
-            if (!"https".equalsIgnoreCase(scheme)) return "Only HTTPS tile sources are allowed to protect result-set location privacy.";
-        } catch (IllegalArgumentException ex) {
-            return "Tile URL template is not a valid HTTPS URL.";
-        }
         return null;
     }
 
@@ -611,6 +631,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         selectionTimer.stop();
         browser.getJBCefClient().removeLoadHandler(loadHandler, browser.getCefBrowser());
         selectQuery.dispose();
+        geometryColumnQuery.dispose();
         readyQuery.dispose();
         sourceQuery.dispose();
         addSourceQuery.dispose();

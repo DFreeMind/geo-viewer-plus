@@ -7,7 +7,9 @@ import java.util.regex.Pattern;
 /** Converts the small, supported WKT subset to geographic WGS84 before it reaches Leaflet. */
 public final class GeometryNormalizer {
     private static final Pattern SRID = Pattern.compile("(?is)^\\s*srid=(\\d+)\\s*;\\s*(.*)$");
-    private static final Pattern COORDINATE = Pattern.compile("(-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s+(-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)(?:\\s+-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)?(?=\\s*(?:,|\\)))");
+    // Leaflet uses the first two ordinates. Drop optional Z and M ordinates while converting
+    // projected coordinates, including four-ordinate ZM WKT.
+    private static final Pattern COORDINATE = Pattern.compile("(-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s+(-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)(?:\\s+-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?){0,2}(?=\\s*(?:,|\\)))");
 
     private GeometryNormalizer() {}
 

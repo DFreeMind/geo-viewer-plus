@@ -157,7 +157,7 @@
     .source-menu-head { margin:0 2px 5px; }
     .source-search { min-height:29px; margin-bottom:4px; padding:0 7px; }
     .source-menu-option { min-height:30px; font-size:11px; }
-    .toolbar-actions, .toolbar-manage-actions { grid-template-columns:repeat(3, 1fr); gap:5px; }
+    .toolbar-actions, .toolbar-manage-actions { grid-template-columns:repeat(4, 1fr); gap:5px; }
     .toolbar-manage-actions { margin-top:5px; }
     .toolbar-actions button, .toolbar-manage-actions button { min-height:29px; padding:0 5px; border-radius:7px; font-size:10px; }
     .toolbar-actions .toolbar-default-button { grid-column:auto; }
@@ -184,8 +184,8 @@
   <div class="toolbar-panel" id="toolbarPanel">
     <div class="floating-toolbar-head"><div><div class="floating-toolbar-title">Map controls</div><div class="floating-toolbar-subtitle">Choose a visual layer and keep it in sync with the result grid.</div></div><span id="toolbarGeometry" class="floating-toolbar-geometry">geom</span></div>
     <div class="toolbar-link-status"><span class="toolbar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.2-1.2"/></svg></span><span class="toolbar-link-copy"><span class="toolbar-link-title">Map and result grid linked</span><span class="toolbar-link-subtitle">Select a row or feature to focus the other view.</span></span></div>
-    <div class="toolbar-group source-group"><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="选择地图来源"><span class="source-picker-leading" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><span id="sourcePickerValue" class="source-picker-value">选择地图</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox" aria-label="地图来源"><div class="source-menu-head"><span>地图来源</span><span id="sourceMenuCount" class="source-menu-count"></span></div><label class="source-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><input id="sourceSearch" type="search" autocomplete="off" placeholder="筛选地图图层" aria-label="筛选地图图层"></label><div id="sourceMenuList" class="source-menu-list"></div></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div><label class="coordinate-mode" title="声明空间数据原始使用的坐标系。插件会自动转换为当前地图需要的坐标系；原样叠加不会修改原始坐标数值，也不会修改数据库。"><span>坐标处理</span><select id="coordinateMode" aria-label="空间数据坐标处理"><option value="raw">原样叠加（不转换）</option><option value="wgs84">原始数据为 WGS84</option><option value="gcj02">原始数据为 GCJ-02</option><option value="bd09">原始数据为 BD-09</option></select></label><div class="coordinate-summary" role="status"><span>地图坐标：<strong id="mapCoordinateSystem">—</strong></span><span id="coordinateConversion">原样叠加（不转换）</span></div></div>
-    <div class="toolbar-group"><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button" title="Set as default">Default</button><button id="addSourceButton" type="button" title="Add custom map">+ Map</button><button id="refreshDataButton" type="button" title="Refresh result data">Refresh</button></div><div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled title="Edit selected custom map">Edit</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled title="Remove selected custom map">Remove</button></div></div>
+    <div class="toolbar-group source-group"><div class="source-picker" id="sourcePicker"><button id="sourcePickerButton" class="source-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="选择地图来源"><span class="source-picker-leading" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg></span><span id="sourcePickerValue" class="source-picker-value">选择地图</span><span class="source-picker-chevron" aria-hidden="true">⌄</span></button><div id="sourceMenu" class="source-menu" role="listbox" aria-label="地图来源"><div class="source-menu-head"><span>地图来源</span><span id="sourceMenuCount" class="source-menu-count"></span></div><label class="source-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><input id="sourceSearch" type="search" autocomplete="off" placeholder="筛选地图图层" aria-label="筛选地图图层"></label><div id="sourceMenuList" class="source-menu-list"></div></div><select id="sourceSelect" class="source-select-hidden" aria-hidden="true" tabindex="-1"></select></div><label class="coordinate-mode" title="选择要显示的空间列。仅列出当前可见结果中可转换为 WKT 的列。"><span>几何列</span><select id="geometryColumnSelect" aria-label="空间几何列"></select></label><label class="coordinate-mode" title="声明空间数据原始使用的坐标系。插件会自动转换为当前地图需要的坐标系；原样叠加不会修改原始坐标数值，也不会修改数据库。"><span>坐标处理</span><select id="coordinateMode" aria-label="空间数据坐标处理"><option value="raw">原样叠加（不转换）</option><option value="wgs84">原始数据为 WGS84</option><option value="gcj02">原始数据为 GCJ-02</option><option value="bd09">原始数据为 BD-09</option></select></label><div class="coordinate-summary" role="status"><span>地图坐标：<strong id="mapCoordinateSystem">—</strong></span><span id="coordinateConversion">原样叠加（不转换）</span></div></div>
+    <div class="toolbar-group"><div class="toolbar-actions"><button class="toolbar-default-button" id="defaultSourceButton" type="button" title="Set as default">Default</button><button id="addSourceButton" type="button" title="Add custom map">+ Map</button><button id="refreshDataButton" type="button" title="Refresh result data without changing the current map view">Refresh</button><button id="fitFeaturesButton" type="button" title="Fit all displayed features">Fit</button></div><div class="toolbar-manage-actions"><button id="editSourceButton" type="button" disabled title="Edit selected custom map">Edit</button><button class="toolbar-remove-button" id="removeSourceButton" type="button" disabled title="Remove selected custom map">Remove</button></div></div>
   </div>
 </div>
 <script>__LEAFLET_JS__</script>
@@ -201,6 +201,7 @@
   let activeSource = '';
   let coordinateMode = window.localStorage.getItem('geoPlus.dataCoordinateSystem') || 'raw';
   let lastPayload = null;
+  let hasLoadedFeatures = false;
   let lastMapClickRow = -1;
   let lastMapClickAt = 0;
   const defaultStyle = { color:'#22c55e', weight:3, opacity:.9, fillColor:'#22c55e', fillOpacity:.28 };
@@ -465,6 +466,7 @@
   function parseCoordinate(text) {
     const values = text.trim().split(/\s+/).map(Number);
     if (values.length < 2 || !Number.isFinite(values[0]) || !Number.isFinite(values[1])) throw new Error('Invalid coordinate');
+    if (values[0] < -180 || values[0] > 180 || values[1] < -90 || values[1] > 90) throw new Error('Coordinate is outside longitude/latitude bounds');
     return transformCoordinate(values[1], values[0]);
   }
   function outsideChina(lat, lng) { return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271; }
@@ -561,12 +563,27 @@
     }
     return parseGroup();
   }
+  function splitCollectionMembers(text) {
+    const body=text.trim();
+    if (body[0] !== '(' || body[body.length - 1] !== ')') throw new Error('Invalid geometry collection');
+    const members=[]; let depth=0; let start=1;
+    for (let index=1; index<body.length - 1; index++) {
+      if (body[index] === '(') depth++;
+      else if (body[index] === ')') { depth--; if (depth < 0) throw new Error('Invalid geometry collection'); }
+      else if (body[index] === ',' && depth === 0) { members.push(body.slice(start, index).trim()); start=index + 1; }
+    }
+    if (depth !== 0) throw new Error('Unclosed geometry collection');
+    const last=body.slice(start, -1).trim();
+    if (last) members.push(last);
+    return members;
+  }
   function parseWkt(wkt) {
     const match = String(wkt).trim().replace(/^srid=\d+;\s*/i, '').match(/^([a-z]+)(?:\s+(?:z|m|zm))?\s*(.*)$/i);
     if (!match) throw new Error('Invalid WKT');
     const type = match[1].toUpperCase();
     const body = match[2].trim();
     if (/^empty$/i.test(body)) throw new Error('Empty geometry');
+    if (type === 'GEOMETRYCOLLECTION') return L.featureGroup(splitCollectionMembers(body).map(parseWkt));
     const groups = parseWktGroups(body);
     let layer;
     if (type === 'POINT') layer = pointMarker(groups[0]);
@@ -588,7 +605,8 @@
       const html = '<div class="feature-popup"><div class="feature-popup-head"><span>Row '+(Number(row)+1)+'</span><span class="feature-popup-type">'+esc(type)+'</span></div><div class="feature-popup-grid">'+rows+'</div></div>';
       const click = () => { const now = Date.now(); if (lastMapClickRow === Number(row) && now - lastMapClickAt < 120) return; lastMapClickRow = Number(row); lastMapClickAt = now; focusRows([row], true); if (window.dg && window.dg.selectInTable) window.dg.selectInTable(String(row)); };
       object.bindPopup(html, { autoPan:false, maxWidth:360, closeButton:true }); object.on('click', click); if (object.eachLayer) object.eachLayer(child => { child._geoRow=Number(row); child.on('click', click); });
-    } catch (e) { console.warn('Geo Viewer Plus could not parse row '+row, e); }
+      return true;
+    } catch (e) { console.warn('Geo Viewer Plus could not parse row '+row, e); return false; }
   }
   function focusRows(rows, openPopup) {
     selected.forEach(i => { const f=features.get(i); if(f) setStyle(f,false); }); selected=[];
@@ -604,16 +622,16 @@
     const selectedRows=[...selected];
     const popupSource=map._popup && map._popup._source;
     const popupRow=popupSource && Number.isFinite(Number(popupSource._geoRow)) ? Number(popupSource._geoRow) : null;
-    clearFeatures(); const bounds=[]; const items=payload.features || [];
-    items.forEach(item => { addWkt(item.wkt, item.row, item.attributes); const f=features.get(item.row); if(f && f.getBounds) bounds.push(f.getBounds()); else if(f && f.getLatLng) bounds.push(L.latLngBounds([f.getLatLng(),f.getLatLng()])); });
+    clearFeatures(); const bounds=[]; const items=payload.features || []; const failedRows=[];
+    items.forEach(item => { if (!addWkt(item.wkt, item.row, item.attributes)) failedRows.push(item.row); const f=features.get(item.row); if(f && f.getBounds) bounds.push(f.getBounds()); else if(f && f.getLatLng) bounds.push(L.latLngBounds([f.getLatLng(),f.getLatLng()])); });
     selected=selectedRows.filter(row => features.has(row));
     selected.forEach(row => setStyle(features.get(row), true));
     document.getElementById('count').textContent = features.size; document.getElementById('geometry').textContent = payload.geometryColumn || '几何列';
     const dataNotice = document.getElementById('dataNotice');
     if (dataNotice) {
       const notices=[];
-      if (payload.truncatedRows) notices.push('显示前 '+(payload.visibleRows-payload.truncatedRows)+' / '+payload.visibleRows+' 行');
       if (payload.skippedRows) notices.push('已跳过 '+payload.skippedRows+' 行不支持或为空的数据');
+      if (failedRows.length) notices.push('渲染失败 '+failedRows.length+' 行');
       dataNotice.textContent=notices.length ? ' · '+notices.join('; ') : '';
     }
     const toolbarGeometry = document.getElementById('toolbarGeometry'); if (toolbarGeometry) toolbarGeometry.textContent = payload.geometryColumn || '几何列';
@@ -621,11 +639,27 @@
     if (popupRow !== null) { const popupFeature=features.get(popupRow); if (popupFeature && popupFeature.openPopup) popupFeature.openPopup(); }
   }
   function rerenderFeaturesPreservingView() { if (lastPayload) renderFeatures(lastPayload, false); }
+  function fitFeatures() {
+    const bounds=[];
+    features.forEach(f => { if(f.getBounds) bounds.push(f.getBounds()); else if(f.getLatLng) bounds.push(L.latLngBounds([f.getLatLng(),f.getLatLng()])); });
+    if (bounds.length) { const group=L.featureGroup(bounds.map(b=>L.rectangle(b,{opacity:0,fillOpacity:0}))); map.fitBounds(group.getBounds().pad(.12), { animate:true, duration:.35 }); }
+  }
+  function updateGeometryColumnPicker(payload) {
+    const select=document.getElementById('geometryColumnSelect');
+    if (!select) return;
+    const columns=payload.geometryColumns || [];
+    select.innerHTML='';
+    columns.forEach(column => { const option=document.createElement('option'); option.value=column.id; option.textContent=column.name; select.appendChild(option); });
+    select.value=payload.geometryColumnId || '';
+    select.disabled=columns.length < 2;
+  }
   function loadFeatures(payload) {
     lastPayload = payload;
-    renderFeatures(payload, true);
+    updateGeometryColumnPicker(payload);
+    renderFeatures(payload, !hasLoadedFeatures);
+    hasLoadedFeatures = true;
   }
-  window.geoPlus = { addSources:addSourcesFromJava, addSource:addSourceFromJava, removeSource, switchSource, loadFeatures, focusRows, setDefaultSource };
+  window.geoPlus = { addSources:addSourcesFromJava, addSource:addSourceFromJava, removeSource, switchSource, loadFeatures, focusRows, setDefaultSource, fitFeatures };
   function updateZoomLabel() {
     const zoom = document.getElementById('zoom');
     if (zoom) zoom.textContent = 'Z=' + map.getZoom();
@@ -654,6 +688,10 @@
       updateSourceMeta();
     });
   }
+  const geometryColumnSelect = document.getElementById('geometryColumnSelect');
+  if (geometryColumnSelect) geometryColumnSelect.addEventListener('change', () => {
+    if (window.dg && window.dg.changeGeometryColumn) window.dg.changeGeometryColumn(geometryColumnSelect.value);
+  });
   document.addEventListener('click', event => {
     const picker=document.getElementById('sourcePicker');
     if (picker && !picker.contains(event.target)) closeSourceMenu();
@@ -678,6 +716,8 @@
   if (retrySourceButton) retrySourceButton.addEventListener('click', retryActiveSource);
   const refreshDataButton = document.getElementById('refreshDataButton');
   if (refreshDataButton) refreshDataButton.addEventListener('click', () => { if (window.dg && window.dg.refreshMap) window.dg.refreshMap(); });
+  const fitFeaturesButton = document.getElementById('fitFeaturesButton');
+  if (fitFeaturesButton) fitFeaturesButton.addEventListener('click', fitFeatures);
   const floatingToolbar = document.getElementById('floatingToolbar');
   const toolbarToggle = document.getElementById('toolbarToggle');
   if (floatingToolbar && toolbarToggle) {

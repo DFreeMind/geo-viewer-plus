@@ -1,6 +1,7 @@
 (() => {
   window.dg = {
     selectInTable:() => {},
+    changeGeometryColumn:() => {},
     changeSource:name => window.geoPlus.switchSource(name),
     addMapSource:() => {},
     editMapSource:() => {},
@@ -22,8 +23,9 @@
   window.geoPlus.switchSource('OSM Standard');
   window.geoPlus.loadFeatures({
     geometryColumn:'geom',
+    geometryColumnId:'0:geom',
+    geometryColumns:[{ id:'0:geom', name:'geom' }],
     visibleRows:3,
-    truncatedRows:0,
     skippedRows:0,
     features:[
       { row:0, wkt:'LINESTRING(116.315 39.895,116.345 39.91,116.382 39.925,116.418 39.91)', attributes:[['name','示例路线'],['mode','独立网页预览']] },

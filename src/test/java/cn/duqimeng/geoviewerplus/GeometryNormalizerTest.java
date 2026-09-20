@@ -28,4 +28,15 @@ final class GeometryNormalizerTest {
         assertFalse(result.isSupported());
         assertEquals("unsupported SRID EPSG:32650", result.problem());
     }
+
+    @Test void keepsDimensionalAndCollectionWktForTheBrowserParser() {
+        assertTrue(GeometryNormalizer.normalize("POINT Z (120 30 12)").isSupported());
+        assertTrue(GeometryNormalizer.normalize("GEOMETRYCOLLECTION(POINT(120 30),LINESTRING(120 30,121 31))").isSupported());
+    }
+
+    @Test void convertsFourOrdinateWebMercatorCoordinates() {
+        GeometryNormalizer.Result result = GeometryNormalizer.normalize("SRID=3857;POINT ZM (0 0 12 99)");
+        assertTrue(result.isSupported());
+        assertEquals("POINT ZM (0 0)", result.wkt());
+    }
 }

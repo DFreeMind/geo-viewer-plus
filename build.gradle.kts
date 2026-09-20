@@ -14,6 +14,16 @@ val webAssets = listOf(
 )
 val bundledWebAssets = layout.buildDirectory.dir("generated/geo-viewer-plus-web-assets")
 val mapPreviewOutput = layout.buildDirectory.file("preview/geo-viewer-plus-preview.html")
+// Build against the lowest supported DataGrip SDK by default. A local newer SDK can be
+// selected for verification with -PdataGripSdkPath=/path/to/DataGrip.
+val dataGripSdkDir = providers.gradleProperty("dataGripSdkPath")
+    .map(::file)
+    .orElse(rootProject.file("tools/datagrip-sdk"))
+    .get()
+val javaToolchainVersion = providers.gradleProperty("javaToolchainVersion")
+    .map(String::toInt)
+    .orElse(21)
+    .get()
 
 val downloadWebAssets by tasks.registering {
     outputs.dir(bundledWebAssets)
@@ -60,9 +70,9 @@ group = "cn.duqimeng.geo-viewer-plus"
 version = providers.gradleProperty("pluginVersion").get()
 
 java {
-    // DataGrip 2026.1 ships Java 25 class files. Compile against its SDK while
-    // retaining Java 17 bytecode for the plugin's declared compatibility range.
-    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
+    // DataGrip 2025.1 and later use Java 21. Retain Java 17 bytecode so the plugin can
+    // run across the declared IDE range; override only when verifying against a newer SDK.
+    toolchain.languageVersion.set(JavaLanguageVersion.of(javaToolchainVersion))
 }
 
 repositories {
@@ -72,19 +82,17 @@ repositories {
 dependencies {
     // The SDK exposes DataGrip's content modules as separate jars. They are provided
     // by DataGrip at runtime, so keep them compile-only for this plugin.
-    compileOnly(fileTree("tools/datagrip-sdk/plugins/DatabaseTools/lib/modules") { include("*.jar") })
-    compileOnly(fileTree("tools/datagrip-sdk/plugins/grid-plugin/lib/modules") { include("*.jar") })
-    // The DataGrid API lives in the separately bundled grid-core plugin.
-    compileOnly(fileTree("tools/datagrip-sdk/plugins/grid-core-plugin/lib/modules") { include("*.jar") })
-    // JCEF is packaged as a bundled plugin in current DataGrip builds, not in lib/.
-    compileOnly(fileTree("tools/datagrip-sdk/plugins/jcef-plugin/lib/modules") { include("*.jar") })
-    compileOnly(fileTree("tools/datagrip-sdk/lib") { include("*.jar") })
+    compileOnly(fileTree(dataGripSdkDir.resolve("plugins/DatabaseTools/lib")) { include("*.jar") })
+    compileOnly(fileTree(dataGripSdkDir.resolve("plugins/DatabaseTools/lib/modules")) { include("*.jar") })
+    compileOnly(fileTree(dataGripSdkDir.resolve("plugins/grid-plugin/lib/modules")) { include("*.jar") })
+    // JCEF is packaged in the platform libraries of supported DataGrip builds.
+    compileOnly(fileTree(dataGripSdkDir.resolve("lib")) { include("*.jar") })
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
 }
 
 intellij {
-    localPath.set(rootProject.file("tools/datagrip-sdk").absolutePath)
-    plugins.set(listOf("DatabaseTools", "intellij.grid.plugin", "jcef-plugin"))
+    localPath.set(dataGripSdkDir.absolutePath)
+    plugins.set(listOf("DatabaseTools", "intellij.grid.plugin"))
     instrumentCode.set(false)
 }
 
@@ -97,7 +105,7 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("261")
+        sinceBuild.set("251")
         untilBuild.set("262.*")
         val releaseNotesFile = providers.gradleProperty("releaseNotesFile")
         if (releaseNotesFile.isPresent) {
