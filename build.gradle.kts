@@ -13,6 +13,7 @@ val webAssets = listOf(
     WebAsset("leaflet-vectorgrid.js", "https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js", "144c59f4da8a82a8d85a9c18c1a8bb62fdaec26cb2f624228e7f70bcd61ba061")
 )
 val bundledWebAssets = layout.buildDirectory.dir("generated/geo-viewer-plus-web-assets")
+val mapPreviewOutput = layout.buildDirectory.file("preview/geo-viewer-plus-preview.html")
 
 val downloadWebAssets by tasks.registering {
     outputs.dir(bundledWebAssets)
@@ -25,6 +26,29 @@ val downloadWebAssets by tasks.registering {
             val digest = MessageDigest.getInstance("SHA-256").digest(target.readBytes()).joinToString("") { "%02x".format(it) }
             check(digest == asset.sha256) { "Checksum mismatch for ${asset.fileName}" }
         }
+    }
+}
+
+val buildMapPreview by tasks.registering {
+    group = "application"
+    description = "Builds a standalone Geo Viewer Plus HTML preview with sample data."
+    dependsOn(downloadWebAssets)
+    val templateFile = layout.projectDirectory.file("src/main/resources/geo-viewer-plus.html")
+    val bootstrapFile = layout.projectDirectory.file("src/preview/geo-viewer-plus-preview.js")
+    inputs.files(templateFile, bootstrapFile)
+    inputs.dir(bundledWebAssets)
+    outputs.file(mapPreviewOutput)
+    doLast {
+        val assets = bundledWebAssets.get().asFile
+        val html = templateFile.asFile.readText()
+                .replace("__LEAFLET_CSS__", assets.resolve("leaflet.css").readText())
+                .replace("__LEAFLET_JS__", assets.resolve("leaflet.js").readText())
+                .replace("__LEAFLET_VECTORGRID_JS__", assets.resolve("leaflet-vectorgrid.js").readText())
+                .replace("__GEO_VIEWER_READY__", bootstrapFile.asFile.readText())
+        val output = mapPreviewOutput.get().asFile
+        output.parentFile.mkdirs()
+        output.writeText(html)
+        logger.lifecycle("Standalone map preview: ${output.absolutePath}")
     }
 }
 

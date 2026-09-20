@@ -29,7 +29,18 @@ $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 & '.\tools\gradle-8.10.2\bin\gradle.bat' buildPlugin --no-daemon
 ```
 
-The installable ZIP is written to `build/distributions/geo-viewer-plus-0.1.0.zip`.
+The installable ZIP is written to `build/distributions/geo-viewer-plus-<version>.zip`.
+
+### Standalone map preview
+
+The DataGrip map template and the browser preview are intentionally separate. Build the standalone preview with:
+
+```powershell
+$env:JAVA_HOME = '.\tools\jdk-21.0.12.1+1'
+& '.\tools\gradle-8.10.2\bin\gradle.bat' buildMapPreview --no-daemon
+```
+
+Open `build/preview/geo-viewer-plus-preview.html` in a browser for local UI testing or screenshots. It contains the complete built-in basemap list and sample point, line, and polygon data. The production `src/main/resources/geo-viewer-plus.html` remains a JCEF template and should not be opened directly.
 
 ## Versioning and releases
 
