@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.jcef.JBCefBrowser;
+import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.ui.jcef.JBCefJSQuery;
 import com.intellij.util.ui.JBUI;
 import org.cef.browser.CefBrowser;
@@ -107,15 +108,15 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
             }
         };
         browser.getJBCefClient().addLoadHandler(loadHandler, browser.getCefBrowser());
-        this.selectQuery = JBCefJSQuery.create(browser);
-        this.geometryColumnQuery = JBCefJSQuery.create(browser);
-        this.readyQuery = JBCefJSQuery.create(browser);
-        this.sourceQuery = JBCefJSQuery.create(browser);
-        this.addSourceQuery = JBCefJSQuery.create(browser);
-        this.editSourceQuery = JBCefJSQuery.create(browser);
-        this.removeSourceQuery = JBCefJSQuery.create(browser);
-        this.defaultSourceQuery = JBCefJSQuery.create(browser);
-        this.reloadQuery = JBCefJSQuery.create(browser);
+        this.selectQuery = createQuery(browser);
+        this.geometryColumnQuery = createQuery(browser);
+        this.readyQuery = createQuery(browser);
+        this.sourceQuery = createQuery(browser);
+        this.addSourceQuery = createQuery(browser);
+        this.editSourceQuery = createQuery(browser);
+        this.removeSourceQuery = createQuery(browser);
+        this.defaultSourceQuery = createQuery(browser);
+        this.reloadQuery = createQuery(browser);
         this.component = new JBPanel<>(new BorderLayout());
         this.selectionTimer = new Timer(180, event -> syncGridState());
         this.lastVisibleRowsKey = visibleRowsKey();
@@ -242,6 +243,14 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
 
     private static JComponent browserFocus(CustomGeoViewerContent content) {
         return content.browser.getComponent();
+    }
+
+    /**
+     * Use the base-browser overload. The JBCefBrowser overload is scheduled for removal
+     * in the 2025.3 platform while this overload remains supported across our IDE range.
+     */
+    private static JBCefJSQuery createQuery(JBCefBrowser browser) {
+        return JBCefJSQuery.create((JBCefBrowserBase) browser);
     }
 
     private static LogView<?> findLogView(DataGrid grid, AnActionEvent event) {
