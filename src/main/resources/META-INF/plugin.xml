@@ -1,9 +1,17 @@
-<idea-plugin>
+<idea-plugin require-restart="false">
     <id>cn.duqimeng.geo-viewer-plus</id>
     <name>Geo Viewer Plus</name>
     <vendor email="support@geoviewer.plus" url="https://www.openstreetmap.org/">Geo Viewer Plus</vendor>
     <description><![CDATA[
-        A focused Geo Viewer panel for database result sets: map points, lines and polygons with free basemap switching and Z-axis scaling.
+        <p>Geo Viewer Plus adds a dedicated interactive map for spatial values in DataGrip result grids. It is independent of DataGrip's built-in Geo Viewer and keeps map interaction connected to the current result set.</p>
+        <ul>
+            <li>Display WKT-compatible points, lines, polygons, and multi-geometries from visible result-grid rows.</li>
+            <li>Select a row to focus and highlight its geometry; click a map feature to select and scroll to its row.</li>
+            <li>Switch between built-in OSM and domestic-friendly basemaps, or add custom XYZ/TMS sources with attribution and subdomains.</li>
+            <li>Persist the selected default basemap, inspect the actual tile zoom level, and retry failed tile requests without interrupting feature selection.</li>
+            <li>Use a compact, collapsible toolbar designed to keep the map and result grid visible together.</li>
+        </ul>
+        <p>Map tiles are requested directly from the selected provider. Use only sources you are permitted to access, and review each provider's attribution and terms.</p>
     ]]></description>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.database</depends>
