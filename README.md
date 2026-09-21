@@ -7,25 +7,17 @@ Java package: `cn.duqimeng.geoviewerplus`
 
 ## Screenshots
 
-Spatial features from the active result set rendered on a vector basemap, with the feature count, geometry column, and actual XYZ zoom level in the status bar.
+<p align="center">
+  <img src="docs/media/readme/overview-vector.png" alt="Vector basemap overview with status bar" width="880">
+  <br><em>Spatial features from the active result set rendered on a vector basemap, with the feature count, geometry column, and actual XYZ zoom level in the status bar.</em>
+</p>
 
-![Vector basemap overview with status bar](docs/media/readme/overview-vector.png)
-
-The basemap switcher lists ten built-in sources — OSM variants, OpenTopoMap, OpenFreeMap vector, Esri World Imagery, AMap, and custom/local entries.
-
-![Basemap switcher](docs/media/readme/basemap-switcher.png)
-
-WGS84 result geometries are converted locally to GCJ-02 for the AMap/Tencent basemaps; the inspector shows the selected row's attributes.
-
-![Point feature on AMap satellite imagery](docs/media/readme/point-inspector.png)
-
-When the data already matches the map projection, coordinate handling can overlay values as-is without conversion.
-
-![Coordinate handling without conversion](docs/media/readme/coordinate-overlay.png)
-
-Custom XYZ/TMS and MVT sources are configured with tile URL templates, subdomains, and attribution.
-
-![Add Custom Map Source dialog](docs/media/readme/custom-map-source.png)
+| | |
+|:---:|:---:|
+| <img src="docs/media/readme/basemap-switcher.png" alt="Basemap switcher" width="440"> | <img src="docs/media/readme/point-inspector.png" alt="Point feature on AMap satellite imagery" width="440"> |
+| The basemap switcher lists ten built-in sources — OSM variants, OpenTopoMap, OpenFreeMap vector, Esri World Imagery, AMap, and custom/local entries. | WGS84 result geometries are converted locally to GCJ-02 for the AMap/Tencent basemaps; the inspector shows the selected row's attributes. |
+| <img src="docs/media/readme/coordinate-overlay.png" alt="Coordinate handling without conversion" width="440"> | <img src="docs/media/readme/custom-map-source.png" alt="Add Custom Map Source dialog" width="440"> |
+| When the data already matches the map projection, coordinate handling can overlay values as-is without conversion. | Custom XYZ/TMS and MVT sources are configured with tile URL templates, subdomains, and attribution. |
 
 ## Features
 
