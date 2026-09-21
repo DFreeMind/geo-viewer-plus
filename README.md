@@ -5,6 +5,28 @@ Geo Viewer Plus is a DataGrip/IntelliJ plugin for inspecting spatial result sets
 Plugin ID: `cn.duqimeng.geo-viewer-plus`  
 Java package: `cn.duqimeng.geoviewerplus`
 
+## Screenshots
+
+Spatial features from the active result set rendered on a vector basemap, with the feature count, geometry column, and actual XYZ zoom level in the status bar.
+
+![Vector basemap overview with status bar](docs/media/readme/overview-vector.png)
+
+The basemap switcher lists ten built-in sources — OSM variants, OpenTopoMap, OpenFreeMap vector, Esri World Imagery, AMap, and custom/local entries.
+
+![Basemap switcher](docs/media/readme/basemap-switcher.png)
+
+WGS84 result geometries are converted locally to GCJ-02 for the AMap/Tencent basemaps; the inspector shows the selected row's attributes.
+
+![Point feature on AMap satellite imagery](docs/media/readme/point-inspector.png)
+
+When the data already matches the map projection, coordinate handling can overlay values as-is without conversion.
+
+![Coordinate handling without conversion](docs/media/readme/coordinate-overlay.png)
+
+Custom XYZ/TMS and MVT sources are configured with tile URL templates, subdomains, and attribution.
+
+![Add Custom Map Source dialog](docs/media/readme/custom-map-source.png)
+
 ## Features
 
 - Uses DataGrip's live `DataGrid` context: clicking the action from a table editor or query result opens the current visible result set automatically.
@@ -19,6 +41,23 @@ Java package: `cn.duqimeng.geoviewerplus`
 - Compact feature inspector for point, line and polygon data.
 - Tools > Open Geo Viewer Plus, the main toolbar, and the result-grid toolbars.
 - A map icon in the main DataGrip toolbar that opens the viewer directly.
+
+## Requirements
+
+- DataGrip 2025.1 (build 251) through 2026.2 (build 262.\*).
+- Runs on the IDE-bundled Java 21 runtime; the plugin is compiled with Java 17 bytecode to stay compatible across that range.
+
+## Installation
+
+Install the ZIP from **Settings | Plugins | ⚙ | Install Plugin from Disk…**. Geo Viewer Plus declares dynamic-plugin support, so DataGrip can normally enable or update it immediately without restarting. If an older viewer is open or the IDE reports that unloading failed, close its Geo Viewer Plus tab and retry; restart only when DataGrip explicitly requests it. The map icon is added to the main toolbar and **Tools | Open Geo Viewer Plus**.
+
+## Usage
+
+- Open the viewer from **Tools | Open Geo Viewer Plus**, the map icon in the main DataGrip toolbar, or the result-grid toolbar. The current visible result set is loaded automatically.
+- Pick a geometry column and a basemap. When the result data is WGS84 and you switch to a GCJ-02 basemap (AMap/Tencent), enable the display-only coordinate conversion; choose *as-is overlay* when the data already matches the map coordinates.
+- Select a grid row to focus and highlight its geometry, or click a geometry to select and scroll to the corresponding row. The feature inspector shows the row's attributes.
+- Click **Refresh** after re-running, editing, filtering, or sorting the query to reload the grid.
+- Use **+ Map** to add custom XYZ/TMS or MVT tile sources.
 
 ## Build
 
@@ -70,8 +109,6 @@ The release script injects that HTML into the Marketplace change notes and the I
 Keep Marketplace screenshots in `docs/media/<version>/`. The Marketplace Media section currently requires uploading those images in the plugin admin page; the official Gradle publish task does not manage page media.
 
 Use `-Bump minor` for a backward-compatible feature group or `-Bump major` for a breaking release. The script checks for a clean worktree, increments `pluginVersion`, runs `publishPlugin`, commits the release, and pushes the Git tag. The token is never stored in the repository.
-
-Install the ZIP from **Settings | Plugins | ⚙ | Install Plugin from Disk…**. Geo Viewer Plus declares dynamic-plugin support, so DataGrip can normally enable or update it immediately without restarting. If an older viewer is open or the IDE reports that unloading failed, close its Geo Viewer Plus tab and retry; restart only when DataGrip explicitly requests it. The map icon is added to the main toolbar and **Tools | Open Geo Viewer Plus**.
 
 ## Next integration seam
 
