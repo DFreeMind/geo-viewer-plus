@@ -15,7 +15,7 @@
     ]]></description>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.database</depends>
-    <depends>com.intellij.modules.jcef</depends>
+    <depends>intellij.grid.plugin</depends>
     <actions>
         <action id="GeoViewerPlus.Open" class="cn.duqimeng.geoviewerplus.OpenGeoViewerAction" text="Open Geo Viewer Plus" description="Open the database Geo Viewer Plus panel" icon="/icons/geoViewer.svg">
             <add-to-group group-id="ToolsMenu" anchor="last" />

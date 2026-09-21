@@ -24,6 +24,12 @@ val javaToolchainVersion = providers.gradleProperty("javaToolchainVersion")
     .map(String::toInt)
     .orElse(21)
     .get()
+val compatibilityIdeBuilds = listOf(
+    "DB-251.29188.65",
+    "DB-253.33813.51",
+    "DB-261.26222.86",
+    "DB-262.10315.132",
+)
 
 val downloadWebAssets by tasks.registering {
     outputs.dir(bundledWebAssets)
@@ -87,11 +93,13 @@ dependencies {
     compileOnly(fileTree(dataGripSdkDir.resolve("plugins/grid-plugin/lib/modules")) { include("*.jar") })
     // JCEF is packaged in the platform libraries of supported DataGrip builds.
     compileOnly(fileTree(dataGripSdkDir.resolve("lib")) { include("*.jar") })
+    compileOnly(fileTree(dataGripSdkDir.resolve("lib/modules")) { include("*.jar") })
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
 }
 
 intellij {
     localPath.set(dataGripSdkDir.absolutePath)
+    // The implementation uses DataGrid classes provided by Data Editor UI.
     plugins.set(listOf("DatabaseTools", "intellij.grid.plugin"))
     instrumentCode.set(false)
 }
@@ -116,6 +124,10 @@ tasks {
     publishPlugin {
         token = providers.gradleProperty("intellijPlatformPublishingToken")
         channels = listOf("default")
+    }
+
+    runPluginVerifier {
+        ideVersions.set(compatibilityIdeBuilds)
     }
 
     withType<JavaCompile> {

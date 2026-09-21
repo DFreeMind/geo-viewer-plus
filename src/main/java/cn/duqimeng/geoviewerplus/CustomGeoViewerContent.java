@@ -141,7 +141,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                         // The map must follow the currently displayed page. Do not let a stale
                         // feature select a row that makes DataGrip navigate to another page.
                         if (!isVisibleRow(row)) return;
-                        grid.getSelectionModel().clearSelection();
+                        clearGridSelection();
                         ModelIndex<GridColumn> column = grid.getContextColumn();
                         if (column == null && !grid.getVisibleColumns().asList().isEmpty()) {
                             column = grid.getVisibleColumns().asList().get(0);
@@ -174,7 +174,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
             SwingUtilities.invokeLater(() -> {
                 if (sources.stream().anyMatch(source -> source.name().equals(sourceName))) {
                     selectedSourceName = sourceName;
-                    browser.runJavaScript("window.geoPlus && window.geoPlus.switchSource(" + quote(sourceName) + ");");
+                    runJavaScript("window.geoPlus && window.geoPlus.switchSource(" + quote(sourceName) + ");");
                 }
             });
             return new JBCefJSQuery.Response("");
@@ -196,7 +196,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                 if (sources.stream().anyMatch(source -> source.name().equals(sourceName))) {
                     defaultSourceName = sourceName;
                     PropertiesComponent.getInstance().setValue(DEFAULT_SOURCE_KEY, defaultSourceName);
-                    browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(sourceName) + ");");
+                    runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(sourceName) + ");");
                 }
             });
             return new JBCefJSQuery.Response("");
@@ -246,6 +246,24 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     /**
+     * Executes JavaScript through the stable JCEF API available in DataGrip 2025.1+.
+     * JBCefBrowser.runJavaScript was added after the oldest supported IDE build.
+     */
+    private void runJavaScript(String script) {
+        CefBrowser cefBrowser = browser.getCefBrowser();
+        if (cefBrowser != null) cefBrowser.executeJavaScript(script, null, 0);
+    }
+
+    /**
+     * SelectionModel.clearSelection was added after DataGrip 2025.1. Clearing both dimensions
+     * through the original selection API keeps row focus behavior equivalent on older builds.
+     */
+    private void clearGridSelection() {
+        grid.getSelectionModel().setRowSelection(grid.getVisibleRows(), false);
+        grid.getSelectionModel().setColumnSelection(grid.getVisibleColumns(), false);
+    }
+
+    /**
      * Use the base-browser overload. The JBCefBrowser overload is scheduled for removal
      * in the 2025.3 platform while this overload remains supported across our IDE range.
      */
@@ -271,7 +289,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         sources.add(source);
         selectedSourceName = source.name();
         persistCustomSources();
-        browser.runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(source) + ", true);");
+        runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(source) + ", true);");
     }
 
     private void editMapSource(String sourceName) {
@@ -290,9 +308,9 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         if (wasDefault) defaultSourceName = updated.name();
         persistCustomSources();
         if (wasDefault) PropertiesComponent.getInstance().setValue(DEFAULT_SOURCE_KEY, defaultSourceName);
-        browser.runJavaScript("window.geoPlus && window.geoPlus.removeSource(" + quote(previous.name()) + ");");
-        browser.runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(updated) + ", " + wasSelected + ");");
-        if (wasDefault) browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(defaultSourceName) + ");");
+        runJavaScript("window.geoPlus && window.geoPlus.removeSource(" + quote(previous.name()) + ");");
+        runJavaScript("window.geoPlus && window.geoPlus.addSource(" + sourceJson(updated) + ", " + wasSelected + ");");
+        if (wasDefault) runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(defaultSourceName) + ");");
     }
 
     private void removeMapSource(String sourceName) {
@@ -312,19 +330,19 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         boolean wasDefault = source.name().equals(defaultSourceName);
         sources.remove(index);
         persistCustomSources();
-        browser.runJavaScript("window.geoPlus && window.geoPlus.removeSource(" + quote(source.name()) + ");");
+        runJavaScript("window.geoPlus && window.geoPlus.removeSource(" + quote(source.name()) + ");");
         if (wasSelected) {
             String fallback = sources.isEmpty() ? "" : sources.get(0).name();
             selectedSourceName = fallback;
             if (!fallback.isBlank()) {
-                browser.runJavaScript("window.geoPlus && window.geoPlus.switchSource(" + quote(fallback) + ");");
+                runJavaScript("window.geoPlus && window.geoPlus.switchSource(" + quote(fallback) + ");");
             }
         }
         if (wasDefault) {
             String fallback = sources.isEmpty() ? "" : sources.get(0).name();
             defaultSourceName = fallback;
             PropertiesComponent.getInstance().setValue(DEFAULT_SOURCE_KEY, fallback);
-            if (!fallback.isBlank()) browser.runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(fallback) + ");");
+            if (!fallback.isBlank()) runJavaScript("window.geoPlus && window.geoPlus.setDefaultSource(" + quote(fallback) + ");");
         }
     }
 
@@ -472,9 +490,9 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private void bootstrapPage() {
         if (!pageReady) return;
         String sourceJson = sources.stream().map(CustomGeoViewerContent::sourceJson).collect(java.util.stream.Collectors.joining(","));
-        browser.runJavaScript("window.geoPlus && window.geoPlus.addSources([" + sourceJson + "]);" );
-        if (!defaultSourceName.isBlank()) browser.runJavaScript("window.geoPlus.setDefaultSource(" + quote(defaultSourceName) + ");");
-        if (!selectedSourceName.isBlank()) browser.runJavaScript("window.geoPlus.switchSource(" + quote(selectedSourceName) + ");");
+        runJavaScript("window.geoPlus && window.geoPlus.addSources([" + sourceJson + "]);" );
+        if (!defaultSourceName.isBlank()) runJavaScript("window.geoPlus.setDefaultSource(" + quote(defaultSourceName) + ");");
+        if (!selectedSourceName.isBlank()) runJavaScript("window.geoPlus.switchSource(" + quote(selectedSourceName) + ");");
         reload();
     }
 
@@ -482,7 +500,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         lastSelectionKey = "";
         payload = payload(GeoDataExtractor.extract(grid, selectedGeometryColumnId));
         lastVisibleRowsKey = visibleRowsKey();
-        browser.runJavaScript("window.geoPlus && window.geoPlus.loadFeatures(" + payload + ");");
+        runJavaScript("window.geoPlus && window.geoPlus.loadFeatures(" + payload + ");");
     }
 
     private void syncGridState() {
@@ -498,7 +516,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
         lastSelectionKey = key;
         if (rows.length == 0) return;
         String rowArray = Arrays.stream(rows).mapToObj(String::valueOf).collect(java.util.stream.Collectors.joining(","));
-        browser.runJavaScript("window.geoPlus && window.geoPlus.focusRows([" + rowArray + "], false);");
+        runJavaScript("window.geoPlus && window.geoPlus.focusRows([" + rowArray + "], false);");
     }
 
     private boolean isVisibleRow(int row) {
