@@ -134,32 +134,33 @@
     .toolbar-link-subtitle { margin-top:2px; overflow:hidden; color:#7fa993; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
     .floating-toolbar-note { margin:0 2px 1px; color:#7288a3; font-size:10px; line-height:1.55; }
     /* The map is already inside a tool window: keep its controls deliberately compact. */
-    .floating-toolbar { top:10px; right:10px; width:min(258px, calc(100vw - 20px)); border-radius:13px; }
+    .floating-toolbar { top:10px; right:10px; width:min(292px, calc(100vw - 20px)); border-radius:13px; }
     .floating-toolbar::before, .toolbar-brand-kicker, .toolbar-live, .floating-toolbar-head, .toolbar-link-status, .toolbar-section-label, .toolbar-source-meta, .floating-toolbar-note { display:none; }
     .toolbar-topbar { min-height:46px; padding:7px 8px 7px 10px; border-bottom-color:rgba(148,163,184,.12); }
     .toolbar-brand { gap:7px; }
     .toolbar-brand-mark { width:25px; height:25px; border-radius:7px; }
     .toolbar-brand-mark svg { width:14px; height:14px; }
-    .toolbar-brand-title { font-size:11px; }
+    .toolbar-brand-title { font-size:13px; }
     .toolbar-toggle { width:28px; height:28px; border-radius:8px; }
     .collapsed .toolbar-toggle { width:42px; height:42px; border-radius:11px; }
     .floating-toolbar.collapsed { width:42px; height:42px; }
     .collapsed .toolbar-topbar, .collapsed .toolbar-head-actions { width:42px; height:42px; min-height:42px; }
-    .toolbar-panel { padding:8px; }
+    .toolbar-panel { padding:10px; }
     .toolbar-group, .toolbar-group.source-group { margin:0; padding:0; border:0; border-radius:0; background:transparent; }
     .source-picker { margin:0 0 7px; }
-    .coordinate-mode { min-height:27px; margin-bottom:6px; padding:0 7px; font-size:9px; }
-    .source-picker-button { min-height:36px; padding:0 9px; border-radius:8px; }
+    .coordinate-mode { min-height:31px; margin-bottom:6px; padding:0 8px; font-size:11px; }
+    .coordinate-summary { min-height:25px; font-size:10px; }
+    .source-picker-button { min-height:40px; padding:0 10px; border-radius:8px; }
     .source-picker-leading { width:20px; height:20px; margin-right:7px; border-radius:6px; }
     .source-picker-leading svg { width:12px; height:12px; }
-    .source-picker-value { font-size:11px; }
+    .source-picker-value { font-size:12px; }
     .source-menu { max-height:min(300px, calc(100vh - 110px)); padding:6px; border-radius:10px; }
     .source-menu-head { margin:0 2px 5px; }
     .source-search { min-height:29px; margin-bottom:4px; padding:0 7px; }
     .source-menu-option { min-height:30px; font-size:11px; }
     .toolbar-actions, .toolbar-manage-actions { grid-template-columns:repeat(4, 1fr); gap:5px; }
     .toolbar-manage-actions { margin-top:5px; }
-    .toolbar-actions button, .toolbar-manage-actions button { min-height:29px; padding:0 5px; border-radius:7px; font-size:10px; }
+    .toolbar-actions button, .toolbar-manage-actions button { min-height:33px; padding:0 5px; border-radius:7px; font-size:11px; }
     .toolbar-actions .toolbar-default-button { grid-column:auto; }
     .leaflet-control-attribution { padding:2px 5px!important; border-radius:5px 0 0 0!important; background:rgba(9,18,33,.86)!important; color:#a9bad0!important; font-size:10px!important; }
     .leaflet-control-attribution a { color:#9bc5ff!important; }
@@ -168,7 +169,7 @@
     .geo-point-marker { width:18px!important; height:18px!important; margin:-9px 0 0 -9px!important; border:2px solid #f8fbff; border-radius:50% 50% 50% 3px; background:radial-gradient(circle at 35% 30%, #d8ffec 0 14%, #51d49a 18% 46%, #177b57 50% 100%); box-shadow:0 3px 9px rgba(0,0,0,.48), 0 0 0 3px rgba(34,197,94,.18); transform:rotate(-45deg); transition:filter .16s ease, transform .16s ease, box-shadow .16s ease; }
     .geo-point-marker::after { content:''; position:absolute; inset:4px; border:1px solid rgba(255,255,255,.72); border-radius:50%; }
     .geo-point-marker.selected { background:radial-gradient(circle at 35% 30%, #fff0d6 0 14%, #ff9b57 18% 46%, #d94b16 50% 100%); box-shadow:0 4px 12px rgba(255,90,31,.5), 0 0 0 4px rgba(255,90,31,.2); filter:saturate(1.12); transform:rotate(-45deg) scale(1.24); }
-    @media (max-width:560px) { .floating-toolbar { top:10px; right:10px; width:min(366px, calc(100vw - 20px)); } .map-status { left:10px; bottom:10px; } .floating-toolbar-title { font-size:16px; } }
+    @media (max-width:560px) { .floating-toolbar { top:10px; right:10px; width:min(330px, calc(100vw - 20px)); } .map-status { left:10px; bottom:10px; } .floating-toolbar-title { font-size:16px; } }
     @media (prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; animation-iteration-count:1!important; } }
   </style>
 </head>
@@ -324,7 +325,8 @@
     return ({
       '腾讯道路（兼容）':'腾讯道路',
       'OpenFreeMap 开源矢量（每周更新）':'OpenFreeMap（矢量）',
-      'Esri World Imagery（需可访问 ArcGIS Online）':'Esri 卫星影像'
+      'Esri World Imagery（需可访问 ArcGIS Online）':'Esri 卫星影像',
+      'Esri World Hillshade（需可访问 ArcGIS Online）':'Esri 山体阴影'
     })[name] || name || '';
   }
   function updateSourceLabels() {

@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.IconLoader;
@@ -62,6 +63,7 @@ import java.util.Base64;
 
 /** Our own bottom result content: DataGrid data in, custom JCEF/Leaflet map out. */
 public final class CustomGeoViewerContent implements com.intellij.openapi.Disposable {
+    private static final Logger LOG = Logger.getInstance(CustomGeoViewerContent.class);
     private static final String CONTENT_ID = "Geo Viewer Plus";
     private static final Key<CustomGeoViewerContent> CONTENT_KEY = Key.create(CONTENT_ID);
     private static final String HTML_RESOURCE = "/geo-viewer-plus.html";
@@ -150,7 +152,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                             grid.getSelectionModel().setSelection(modelRow, column);
                         }
                         grid.getSelectionModel().setRowSelection(modelRow, true);
-                        if (column != null) grid.showCell(row, column);
+                        if (column != null) showGridCellCompat(row, modelRow, column);
                         lastSelectionKey = "[" + row + "]";
                     }
                 }, ModalityState.any());
@@ -246,7 +248,7 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     }
 
     /**
-     * Executes JavaScript through the stable JCEF API available in DataGrip 2025.1+.
+     * Executes JavaScript through the stable JCEF API available in the DataGrip 2023.1 baseline.
      * JBCefBrowser.runJavaScript was added after the oldest supported IDE build.
      */
     private void runJavaScript(String script) {
@@ -261,6 +263,18 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
     private void clearGridSelection() {
         grid.getSelectionModel().setRowSelection(grid.getVisibleRows(), false);
         grid.getSelectionModel().setColumnSelection(grid.getVisibleColumns(), false);
+    }
+
+    private void showGridCellCompat(int row, ModelIndex<GridRow> modelRow, ModelIndex<GridColumn> column) {
+        try {
+            try {
+                DataGrid.class.getMethod("showCell", ModelIndex.class, ModelIndex.class).invoke(grid, modelRow, column);
+            } catch (NoSuchMethodException ignored) {
+                DataGrid.class.getMethod("showCell", int.class, ModelIndex.class).invoke(grid, row, column);
+            }
+        } catch (ReflectiveOperationException error) {
+            LOG.warn("Could not scroll the selected DataGrid cell into view", error);
+        }
     }
 
     /**
@@ -542,7 +556,8 @@ public final class CustomGeoViewerContent implements com.intellij.openapi.Dispos
                 new MapSource("OSM Humanitarian", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "© OpenStreetMap contributors · HOT", false, "abc"),
                 new MapSource("OpenTopoMap", "https://tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors · SRTM", false),
                 new MapSource("OpenFreeMap 开源矢量（每周更新）", "https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf", "© OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors", false, "", false, MapSourceType.MVT, "water,waterway,landcover,landuse,park,building,transportation,boundary,place,poi"),
-                new MapSource("Esri World Imagery（需可访问 ArcGIS Online）", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "© Esri", false)
+                new MapSource("Esri World Imagery（需可访问 ArcGIS Online）", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "© Esri", false),
+                new MapSource("Esri World Hillshade（需可访问 ArcGIS Online）", "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", "© Esri · USGS · NOAA", false)
         );
     }
 

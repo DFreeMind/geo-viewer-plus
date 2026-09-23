@@ -14,8 +14,8 @@ val webAssets = listOf(
 )
 val bundledWebAssets = layout.buildDirectory.dir("generated/geo-viewer-plus-web-assets")
 val mapPreviewOutput = layout.buildDirectory.file("preview/geo-viewer-plus-preview.html")
-// Build against the lowest supported DataGrip SDK by default. A local newer SDK can be
-// selected for verification with -PdataGripSdkPath=/path/to/DataGrip.
+// Use tools/datagrip-sdk by default. Select a specific SDK for compatibility checks with
+// -PdataGripSdkPath=tools/datagrip-sdk-231, for example.
 val dataGripSdkDir = providers.gradleProperty("dataGripSdkPath")
     .map(::file)
     .orElse(rootProject.file("tools/datagrip-sdk"))
@@ -24,7 +24,12 @@ val javaToolchainVersion = providers.gradleProperty("javaToolchainVersion")
     .map(String::toInt)
     .orElse(21)
     .get()
+val hasSplitGridPlugins = dataGripSdkDir.resolve("plugins/grid-impl").isDirectory
 val compatibilityIdeBuilds = listOf(
+    "DB-231.9011.35",
+    "DB-232.10203.8",
+    "DB-233.14015.137",
+    "DB-241.19072.24",
     "DB-251.29188.65",
     "DB-253.33813.51",
     "DB-261.26222.86",
@@ -76,8 +81,7 @@ group = "cn.duqimeng.geo-viewer-plus"
 version = providers.gradleProperty("pluginVersion").get()
 
 java {
-    // DataGrip 2025.1 and later use Java 21. Retain Java 17 bytecode so the plugin can
-    // run across the declared IDE range; override only when verifying against a newer SDK.
+    // Compile with the selected JDK and retain Java 17 bytecode for the DataGrip 2023.1 baseline.
     toolchain.languageVersion.set(JavaLanguageVersion.of(javaToolchainVersion))
 }
 
@@ -91,6 +95,8 @@ dependencies {
     compileOnly(fileTree(dataGripSdkDir.resolve("plugins/DatabaseTools/lib")) { include("*.jar") })
     compileOnly(fileTree(dataGripSdkDir.resolve("plugins/DatabaseTools/lib/modules")) { include("*.jar") })
     compileOnly(fileTree(dataGripSdkDir.resolve("plugins/grid-plugin/lib/modules")) { include("*.jar") })
+    compileOnly(fileTree(dataGripSdkDir.resolve("plugins/grid-impl/lib")) { include("*.jar") })
+    compileOnly(fileTree(dataGripSdkDir.resolve("plugins/grid-core-impl/lib")) { include("*.jar") })
     // JCEF is packaged in the platform libraries of supported DataGrip builds.
     compileOnly(fileTree(dataGripSdkDir.resolve("lib")) { include("*.jar") })
     compileOnly(fileTree(dataGripSdkDir.resolve("lib/modules")) { include("*.jar") })
@@ -100,7 +106,12 @@ dependencies {
 intellij {
     localPath.set(dataGripSdkDir.absolutePath)
     // The implementation uses DataGrid classes provided by Data Editor UI.
-    plugins.set(listOf("DatabaseTools", "intellij.grid.plugin"))
+    val gridPlugins = if (hasSplitGridPlugins) {
+        listOf("intellij.grid.impl", "intellij.grid.core.impl")
+    } else {
+        listOf("intellij.grid.plugin")
+    }
+    plugins.set(listOf("DatabaseTools") + gridPlugins)
     instrumentCode.set(false)
 }
 
@@ -113,7 +124,7 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("251")
+        sinceBuild.set("231")
         untilBuild.set("262.*")
         val releaseNotesFile = providers.gradleProperty("releaseNotesFile")
         if (releaseNotesFile.isPresent) {
@@ -128,6 +139,11 @@ tasks {
 
     runPluginVerifier {
         ideVersions.set(compatibilityIdeBuilds)
+        localPaths.set(
+            listOf("tools/datagrip-sdk-243")
+                .map { rootProject.file(it) }
+                .filter { it.isDirectory }
+        )
     }
 
     withType<JavaCompile> {

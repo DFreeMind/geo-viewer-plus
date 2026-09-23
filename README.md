@@ -23,7 +23,7 @@ Java package: `cn.duqimeng.geoviewerplus`
 
 - Uses DataGrip's live `DataGrid` context: clicking the action from a table editor or query result opens the current visible result set automatically.
 - Own JCEF + Leaflet renderer and own result-set-to-WKT extraction; it does not open or reuse DataGrip's Geo Viewer content.
-- Built-in basemap switcher with OSM Standard, OSM Humanitarian, OpenTopoMap, OpenFreeMap's keyless open-source vector tiles (updated weekly), Esri World Imagery (when ArcGIS Online is reachable), plus AMap road/imagery and a Tencent compatibility source. Domestic sources are explicitly marked GCJ-02.
+- Built-in basemap switcher with OSM Standard, OSM Humanitarian, OpenTopoMap, OpenFreeMap's keyless open-source vector tiles (updated weekly), Esri World Imagery and Esri World Hillshade terrain relief (when ArcGIS Online is reachable), plus AMap road/imagery and a Tencent compatibility source. Domestic sources are explicitly marked GCJ-02.
 - A display-only coordinate selector converts WGS84 result geometries to GCJ-02 for AMap/Tencent or BD-09 for Baidu. Conversion happens locally in the browser, is limited to mainland-China coordinates, and never writes to or changes the database value.
 - `+ Add map` accepts XYZ/TMS and MVT tile templates, subdomains and attribution. Tile requests are sent directly to the configured provider; choose sources you are permitted to access and whose privacy policy you accept.
 - Bidirectional selection: selecting a grid row focuses and highlights its geometry; clicking a geometry selects and scrolls to the corresponding grid row.
@@ -36,7 +36,7 @@ Java package: `cn.duqimeng.geoviewerplus`
 
 ## Requirements
 
-- DataGrip 2025.1 (build 251) through 2026.2 (build 262.\*).
+- DataGrip 2023.1 (build 231) through 2026.2 (build 262.*).
 - Runs on the IDE-bundled Java 21 runtime; the plugin is compiled with Java 17 bytecode to stay compatible across that range.
 
 ## Installation
@@ -53,11 +53,11 @@ Install the ZIP from **Settings | Plugins | ⚙ | Install Plugin from Disk…**.
 
 ## Build
 
-The build expects a local Gradle distribution and a local DataGrip SDK. Keep both outside the repository. It compiles against the 2025.1 baseline (build 251) with Java 21 and declares compatibility through build 262. The default SDK location is `tools/datagrip-sdk`; use `dataGripSdkPath` to verify another installed SDK:
+The build expects a local Gradle distribution and a local DataGrip SDK. Keep both outside the repository. The compatibility baseline is DataGrip 2023.1 (build 231), and the plugin is compiled to Java 17 bytecode. The default SDK location is `tools/datagrip-sdk`; use `dataGripSdkPath` to verify another installed SDK:
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
-& '.\tools\gradle-8.10.2\bin\gradle.bat' verifyPlugin buildPlugin --no-daemon
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
+& '.\tools\gradle-8.10.2\bin\gradle.bat' verifyPlugin buildPlugin --no-daemon -PjavaToolchainVersion=17 -PdataGripSdkPath=tools/datagrip-sdk-231
 ```
 
 The installable ZIP is written to `build/distributions/geo-viewer-plus-<version>.zip`.

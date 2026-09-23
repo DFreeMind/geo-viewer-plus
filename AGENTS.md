@@ -18,11 +18,11 @@ The plugin owns its JCEF/Leaflet map view and must not bridge to or modify DataG
 1. Inspect the current working tree and relevant files before editing. Preserve unrelated user changes.
 2. Keep each change focused. Do not change plugin IDs, Java namespaces, compatibility ranges, or release behavior casually.
 3. Use `apply_patch` for source and documentation edits. Do not use destructive reset or checkout commands.
-4. After implementation, run the relevant checks. For plugin changes, run:
+4. After implementation, run the relevant checks. For plugin changes, first inspect `tools/` for the bundled JDKs and DataGrip SDKs. Choose a JDK and SDK pair that can read the SDK class files; do not assume the system JDK or the default `tools/datagrip-sdk` matches the configured Java toolchain. For example, the local JDK 17 works with the DataGrip 231 baseline SDK:
 
    ```powershell
    $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
-   & '.\tools\gradle-8.10.2\bin\gradle.bat' verifyPlugin buildPlugin --no-daemon
+   & '.\tools\gradle-8.10.2\bin\gradle.bat' verifyPlugin buildPlugin --no-daemon -PjavaToolchainVersion=17 -PdataGripSdkPath=tools/datagrip-sdk-231
    ```
 
 5. Inspect the generated ZIP when metadata or packaging changes. Confirm the plugin ID, version, namespace, and change notes in the packaged `META-INF/plugin.xml`.
@@ -44,7 +44,8 @@ The plugin owns its JCEF/Leaflet map view and must not bridge to or modify DataG
 ## Build and compatibility
 
 - The repository intentionally ignores local DataGrip SDK, JDK, Gradle distribution, `.gradle`, and `build` output.
-- The current local build targets DataGrip build range `261` through `262.*`.
+- The plugin currently declares DataGrip compatibility from build `231` (2023.1) through `262.*`. The verifier checks builds `231.9011.35`, `232.10203.8`, `233.14015.137`, `241.19072.24`, `251.29188.65`, `253.33813.51`, `261.26222.86`, and `262.10315.132`; it also checks the local SDK at `tools/datagrip-sdk-243` when that directory is present.
+- Do not lower `since-build` below `231` until the plugin has been built and verified against the corresponding older DataGrip SDK.
 - The Gradle IntelliJ Plugin 1.x warning for 2024.2+ and deprecated `JBCefJSQuery.create` warnings are known; do not hide them. New failures must be investigated.
 - Marketplace publishing is only allowed after `verifyPlugin` and `buildPlugin` succeed.
 
